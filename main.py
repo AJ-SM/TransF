@@ -1,7 +1,12 @@
+from scripts import tocknizer
 from scripts import decoder
 
-data = decoder.cleanup()
+data,dictonary = decoder.cleanup()
 
-dictonary = sorted(list(set(data)))
+
+conv = decoder.clean()
 t = len(dictonary)
-print("For the vocab dict ", dictonary, "we are having total size of dict : ",t)
+
+dataset = tocknizer.generate(conv,dictonary)
+print(dataset.shape)
+# print("For the vocab dict ", dictonary, "we are having total size of dict : ",t)

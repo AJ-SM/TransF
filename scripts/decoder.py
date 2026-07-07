@@ -10,19 +10,20 @@ def cleanup(chunk=chunk,data=data):
     if chunk == None:
         raise ValueError("Chunk not Found Pls enter the chunk ")
     if int(chunk) == 1:
-        clean(data)
-        return data
+        dictonary = sorted(list(set(data)))
+        return data, dictonary
     else:
         print('I Am SORRY BABU ')
 
 
-def clean(data):
+def clean(data=data):
     clean_d = []
     text = data.split('\n')
     for i in text:
         net = i.split(':')[-1]
 
         if net != ' <Media omitted>':
-            print(net)
+
             clean_d.append(net)
-    # print(text)
+
+    return clean_d
