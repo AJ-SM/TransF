@@ -31,6 +31,14 @@ def generate(data,dictonary):
     return tens
 
 
+def genIO(data, start_index, context_size):
+    # Grab a chunk for the input (Length = context_size)
+    x = data[start_index: start_index + context_size]
+
+    # Grab the exact same sized chunk, but shifted right by 1
+    y = data[start_index + 1: start_index + context_size + 1]
+
+    return x, y
 
 
 # Test
