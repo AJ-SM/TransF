@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 
 env = load_dotenv()
 chunk = os.getenv("CHUNK")
+
 data= open("D:\\Storeage-1\\MlNewBorn\\TransF\\res\\data.txt","r",encoding="utf-8").read()
 
 def cleanup(chunk=chunk,data=data):

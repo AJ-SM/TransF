@@ -14,7 +14,7 @@ def decode(input,dictonary):
     for idx in input:
         value = dictonary[idx]
         outputD.append(value)
-    return outputD
+    return "".join(outputD)
 
 def generate(data,dictonary):
     pars = np.array(data).flatten()
