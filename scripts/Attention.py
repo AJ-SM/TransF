@@ -4,7 +4,7 @@ from torch.nn import functional as F
 from scripts import tocknizer
 
 
-class BiLangModel(nn.Module):
+class BiLangModelv2(nn.Module):
     def __init__(self,t):
         super().__init__()
         self.token_embd_table = nn.Embedding(t,t)
