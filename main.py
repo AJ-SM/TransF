@@ -48,17 +48,21 @@
 # print(tocknizer.decode(model.generate(idx,max_tocken_len=300)[0].tolist(),dictonary=dictonary))
 # print("         Done Preds             ")
 
+
+
+
+# --- Working Code ---
 from scripts import tocknizer
 from scripts import decoder
 from scripts import BiLangModel
 import torch
 
 data,dictonary = decoder.cleanup()
-
+n_embbed  = 32
 conv = decoder.clean()
 t = len(dictonary)
 
-model = BiLangModel.BiLangModel(t)
+model = BiLangModel.BiLangModel(t,n_embbed)
 
 dataset = tocknizer.generate(conv,dictonary)
 x,y = tocknizer.genIO(dataset[:800],1,8)
@@ -71,6 +75,9 @@ x = x.view(1, -1)
 # print(f"Input shape: {x.shape}")
 # print(f"Target shape: {y.shape}")
 
+
+# Creating a Naive BOW
+B,T,C = None,8,n_embbed
 
 
 

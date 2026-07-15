@@ -5,12 +5,17 @@ from scripts import tocknizer
 
 
 class BiLangModel(nn.Module):
-    def __init__(self,t):
+    def __init__(self,t,n_embbed):
         super().__init__()
-        self.token_embd_table = nn.Embedding(t,t)
+        self.token_embd_table = nn.Embedding(t,n_embbed)
+        self.postion_embd_table = nn.Embedding(t,n_embbed)
+        self.llm_head = nn.Linear(n_embbed,t)
 
     def forward(self, idx, targets=None):
-        logits = self.token_embd_table(idx)
+        token_embeddings = self.token_embd_table(idx)
+        logits = self.llm_head(token_embeddings)
+
+
         if targets is None:
             loss = None
         else:
@@ -49,3 +54,5 @@ def trainer(model,dataset, epoch, context_size=8):
             total_loss += loss.item()
             steps += 1
         print(f"epoch {e}: avg loss {total_loss / steps:.4f}")
+
+    torch.save(model.state_dict(),".model/BiLangModel.pth")

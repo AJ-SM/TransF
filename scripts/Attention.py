@@ -4,6 +4,32 @@ from torch.nn import functional as F
 from scripts import tocknizer
 
 
+
+
+# BOW Example
+# # B, T, C = 4, 8, 2 (toy example dimensions)
+# xbow = torch.zeros((B, T, C)) # xbow stands for x bag of words
+# for b in range(B):
+#     for t in range(T):
+#         x_prev = x[b, :t+1] # Everything up to and including the t-th token
+#         xbow[b, t] = torch.mean(x_prev, 0)
+
+
+# Transfromer Trick
+# Create weights matrix 'wei' that tells us how much of every row to average up
+# wei = torch.tril(torch.ones(T, T))
+# wei = wei / torch.sum(wei, 1, keepdim=True) # Normalize rows to sum to 1
+# xbow2 = wei @ x # PyTorch automatically applies this in parallel across the batch dimension
+
+# Using Softmax
+
+# tril = torch.tril(torch.ones(T, T))
+# wei = torch.zeros((T, T))
+# wei = wei.masked_fill(tril == 0, float('-inf')) # The future cannot communicate with the past
+# wei = torch.softmax(wei, dim=-1) # Normalizes to give us the exact same average distribution
+# xbow3 = wei @ x
+
+
 class BiLangModelv2(nn.Module):
     def __init__(self,t):
         super().__init__()
