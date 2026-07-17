@@ -106,12 +106,6 @@
 02/03/25, 9:33 pm - Anuj-Sidam: Are the MpMC che string wale questions kai hote ??
 02/03/25, 9:33 pm - Anuj-Sidam: Lab wale
 02/03/25, 10:36 pm - Ashish (ECE) ( VNIT): Nahi mahiti yaar... sapdle tr pathven
-03/03/25, 10:13 am - Ashish (ECE) ( VNIT): TO MOVE STRING FROM ONE LOCATION TO OTHER.
-PART B: TO PRINT THE STRING WITH INPUT FROM KEYBOARD.
-PART C: TO FIND A CHARACTER IN THE STRING (‘E’ IN “HELLO”).
-** ’A’ NOT FOUND IN “HELLO”.
-** ‘E’ FOUND IN “HELLO”
-PART D: TO COUNT PARTICULAR CHARACTER IN THE STRING (‘e in hello”).
 03/03/25, 10:13 am - Ashish (ECE) ( VNIT): Br ne bheja bhai <This message was edited>
 03/03/25, 10:22 am - Anuj-Sidam: Daam
 03/03/25, 10:22 am - Anuj-Sidam: But lab nahi ahe aaj
@@ -119,8 +113,7 @@ PART D: TO COUNT PARTICULAR CHARACTER IN THE STRING (‘e in hello”).
 11/03/25, 10:55 am - Anuj-Sidam: <Media omitted>
 11/03/25, 10:55 am - Anuj-Sidam: <Media omitted>
 11/03/25, 10:55 am - Anuj-Sidam: <Media omitted>
-11/03/25, 10:55 am - Anuj-Sidam: <Media omitted>
-11/03/25, 11:00 am - Anuj-Sidam: https://github.com/alexander-hanel/unicorn-engine-notes
+11/03/25, 10:55 am - Anuj-Sidam: <Media omitted
 11/03/25, 2:59 pm - Anuj-Sidam: <Media omitted>
 11/03/25, 3:15 pm - Ashish (ECE) ( VNIT): code lihlys ka?? lihla asashil tr pathv ki
 11/03/25, 6:57 pm - Anuj-Sidam: <Media omitted>
@@ -171,322 +164,7 @@ What voltage must be applied to the capacitor to make the gravitational pull on 
 14/04/25, 9:23 am - Ashish (ECE) ( VNIT): Mi tr ekach esp madhe krych mhntoy....tula code Taku ka combine krun?
 14/04/25, 9:24 am - Anuj-Sidam: Bara karuu
 14/04/25, 9:24 am - Ashish (ECE) ( VNIT): Ha... aani ram cha vishy pn nahiye hot....
-14/04/25, 10:44 am - Ashish (ECE) ( VNIT): #include <Arduino.h>
-#include <driver/i2s.h>
-#include <arduinoFFT.h>
-#define I2S_NUM I2S_NUM_0
-#define SAMPLE_RATE 44100 // Standard CD-quality audio
-#define BUFFER_SIZE 22052 // Delay buffer size
-#define ADC_PIN 34 // Guitar input (Analog)
-#define button_pin 2
-#define DELAY_MS 500 // Delay time in milliseconds
-// Pin definitions
-const int MIC_PIN = 34;        // ADC pin for microphone input
-const int FLAT_LED = 26;
-const int TUNED_LED = 14;
-const int SHARP_LED = 27;
-// FFT parameters
-const uint16_t SAMPLES = 1024;                     // Must be a power of 2
-const double SAMPLING_FREQUENCY = 40000.0;    
-     // Hz
-double vReal[SAMPLES];
-double vImag[SAMPLES];
-
-ArduinoFFT FFT = ArduinoFFT(vReal, vImag, SAMPLES, SAMPLING_FREQUENCY);
-
-// Standard guitar string frequencies (E A D G B e)
-const double guitarFrequencies[6] = {82.41, 110.00, 146.83, 196.00, 246.94, 329.63};
- // Delay buffer
-int delayIndex = 0;
-void setupI2S() {
-i2s_config_t i2s_config = {
-.mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_TX),
-.sample_rate = SAMPLE_RATE,
-.bits_per_sample = I2S_BITS_PER_SAMPLE_16BIT,
-.channel_format = I2S_CHANNEL_FMT_RIGHT_LEFT,
-.communication_format = I2S_COMM_FORMAT_STAND_I2S,
-.intr_alloc_flags = 0,
-.dma_buf_count = 8,
-.dma_buf_len = 512,
-.use_apll = false
-};
-i2s_driver_install(I2S_NUM, &i2s_config, 0, NULL);
-i2s_pin_config_t pin_config = {
-.bck_io_num = 26,
-.ws_io_num = 25,
-.data_out_num = 22,
-.data_in_num = -1
-};
-i2s_set_pin(I2S_NUM, &pin_config);
-}
-int flag=0;
-void setup() {
-pinMode(buttonPin, INPUT);
-if(digitalRead(button_pin) == HIGH ){
-int16_t delayBuffer[BUFFER_SIZE];
-Serial.begin(115200);
-setupI2S();
-memset(delayBuffer, 0, sizeof(delayBuffer));
-flag=1;}
-else{  Serial.begin(115200);
-  analogReadResolution(12); // For ESP32 (0–4095)
-
-  pinMode(FLAT_LED, OUTPUT);
-  pinMode(TUNED_LED, OUTPUT);
-  pinMode(SHARP_LED, OUTPUT);
-
-  restting(); // Optional: blink all LEDs to indicate startup
-  }}
-void loop() {
-if(flag==1){
-int16_t sample;
-// Read guitar input (ADC)
-
-sample = (analogRead(ADC_PIN) - 2048) << 4;//centering around zero and scaling up to 16bit size
- // Scale up to match 16-bit audio
-// Apply delay effect
-int16_t delayedSample = delayBuffer[delayIndex];
-delayBuffer[delayIndex] = sample; // Store current sample in delay buffer
- delayIndex = (delayIndex + 1) % (SAMPLE_RATE * DELAY_MS / 1000);
-int16_t outputSample = (sample + delayedSample) / 2; // Mix dry and delayed signal
-// Send audio to I²S
-size_t bytes_written;
-i2s_write(I2S_NUM, &outputSample, sizeof(outputSample), &bytes_written, portMAX_DELAY);
-if(digitalRead(button_pin) == LOW ){ESP.restart();}}
-else{// Sample audio
-  unsigned long samplingPeriodUs = 1000000 / SAMPLING_FREQUENCY;
-  unsigned long timer;
-
-  for (int i = 0; i < SAMPLES; i++) {
-    timer = micros();
-    vReal[i] = analogRead(MIC_PIN);
-    vImag[i] = 0;
-    while (micros() - timer < samplingPeriodUs);
-  }
-
-  // Perform FFT
-  FFT.windowing(FFT_WIN_TYP_HAMMING, FFT_FORWARD);
-  FFT.compute(FFT_FORWARD);
-  FFT.complexToMagnitude();
-
-  // Get the dominant frequency
-  double peakFrequency = findPeakFrequency();
-  Serial.print("Detected Frequency: ");
-  Serial.println(peakFrequency, 2);
-
-  // Check tuning and light LEDs
-  checkTuning(peakFrequency);}
-  if(digitalRead(button_pin) == HIGH ){ESP.restart();}}
-  double findPeakFrequency() {
-  int peakIndex = 0;
-  double peakValue = 0;
-
-  for (int i = 1; i < SAMPLES / 2; i++) {
-    if (vReal[i] > peakValue) {
-      peakValue = vReal[i];
-      peakIndex = i;
-    }
-  }
-
-  return (peakIndex * SAMPLING_FREQUENCY / SAMPLES);
-}
-
-void checkTuning(double freq) {
-  digitalWrite(FLAT_LED, LOW);
-  digitalWrite(TUNED_LED, LOW);
-  digitalWrite(SHARP_LED, LOW);
-
-  for (int i = 0; i < 6; i++) {
-    double error = abs(freq - guitarFrequencies[i]);
-
-    if (error <= 1.0) {
-      digitalWrite(TUNED_LED, HIGH);
-      return;
-    } else if (freq < guitarFrequencies[i]) {
-      digitalWrite(FLAT_LED, HIGH);
-      return;
-    } else if (freq > guitarFrequencies[i]) {
-      digitalWrite(SHARP_LED, HIGH);
-      return;
-    }
-  }
-}
-
-void restting() {
-  for (int i = 0; i < 2; i++) {
-    digitalWrite(FLAT_LED, HIGH);
-    delay(100);
-    digitalWrite(FLAT_LED, LOW);
-
-    digitalWrite(TUNED_LED, HIGH);
-    delay(100);
-    digitalWrite(TUNED_LED, LOW);
-
-    digitalWrite(SHARP_LED, HIGH);
-    delay(100);
-    digitalWrite(SHARP_LED, LOW);
-    delay(500);
-  }
-}
 14/04/25, 10:45 am - Ashish (ECE) ( VNIT): are ha code compile krun bgh kii.... mazya laptop vr arduinofft library download hot nahiye
-14/04/25, 11:21 am - Anuj-Sidam: #include <Arduino.h>
-#include <driver/i2s.h>
-#include <arduinoFFT.h>
-#define I2S_NUM I2S_NUM_0
-#define SAMPLE_RATE 44100 // Standard CD-quality audio
-#define BUFFER_SIZE 22052 // Delay buffer size
-#define ADC_PIN 34 // Guitar input (Analog)
-#define button_pin 2
-#define DELAY_MS 500 // Delay time in milliseconds
-// Pin definitions
-const int MIC_PIN = 34;        // ADC pin for microphone input
-const int FLAT_LED = 26;
-const int TUNED_LED = 14;
-const int SHARP_LED = 27;
-// FFT parameters
-const uint16_t SAMPLES = 1024;                     // Must be a power of 2
-const double SAMPLING_FREQUENCY = 40000.0;    
-     // Hz
-double vReal[SAMPLES];
-double vImag[SAMPLES];
-
-ArduinoFFT FFT = ArduinoFFT(vReal, vImag, SAMPLES, SAMPLING_FREQUENCY);
-
-// Standard guitar string frequencies (E A D G B e)
-const double guitarFrequencies[6] = {82.41, 110.00, 146.83, 196.00, 246.94, 329.63};
- // Delay buffer
-int delayIndex = 0;
-void setupI2S() {
-i2s_config_t i2s_config = {
-.mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_TX),
-.sample_rate = SAMPLE_RATE,
-.bits_per_sample = I2S_BITS_PER_SAMPLE_16BIT,
-.channel_format = I2S_CHANNEL_FMT_RIGHT_LEFT,
-.communication_format = I2S_COMM_FORMAT_STAND_I2S,
-.intr_alloc_flags = 0,
-.dma_buf_count = 8,
-.dma_buf_len = 512,
-.use_apll = false
-};
-i2s_driver_install(I2S_NUM, &i2s_config, 0, NULL);
-i2s_pin_config_t pin_config = {
-.bck_io_num = 26,
-.ws_io_num = 25,
-.data_out_num = 22,
-.data_in_num = -1
-};
-i2s_set_pin(I2S_NUM, &pin_config);
-}
-int flag=0;
-void setup() {
-pinMode(button_pin, INPUT);
-if(digitalRead(button_pin) == HIGH ){
-int16_t delayBuffer[BUFFER_SIZE];
-Serial.begin(115200);
-setupI2S();
-memset(delayBuffer, 0, sizeof(delayBuffer));
-flag=1;}
-else{  Serial.begin(115200);
-  analogReadResolution(12); // For ESP32 (0–4095)
-
-  pinMode(FLAT_LED, OUTPUT);
-  pinMode(TUNED_LED, OUTPUT);
-  pinMode(SHARP_LED, OUTPUT);
-
-  restting(); // Optional: blink all LEDs to indicate startup
-  }}
-void loop() {
-  
-if(flag==1){
-int16_t sample;
-// Read guitar input (ADC)
-
-sample = (analogRead(ADC_PIN) - 2048) << 4;//centering around zero and scaling up to 16bit size
- // Scale up to match 16-bit audio
-// Apply delay effect
-int16_t delayedSample = delayBuffer[delayIndex];
-delayBuffer[delayIndex] = sample; // Store current sample in delay buffer
- delayIndex = (delayIndex + 1) % (SAMPLE_RATE * DELAY_MS / 1000);
-int16_t outputSample = (sample + delayedSample) / 2; // Mix dry and delayed signal
-// Send audio to I²S
-size_t bytes_written;
-i2s_write(I2S_NUM, &outputSample, sizeof(outputSample), &bytes_written, portMAX_DELAY);
-if(digitalRead(button_pin) == LOW ){ESP.restart();}}
-else{// Sample audio
-  unsigned long samplingPeriodUs = 1000000 / SAMPLING_FREQUENCY;
-  unsigned long timer;
-
-  for (int i = 0; i < SAMPLES; i++) {
-    timer = micros();
-    vReal[i] = analogRead(MIC_PIN);
-    vImag[i] = 0;
-    while (micros() - timer < samplingPeriodUs);
-  }
-
-  // Perform FFT
-  FFT.windowing(FFT_WIN_TYP_HAMMING, FFT_FORWARD);
-  FFT.compute(FFT_FORWARD);
-  FFT.complexToMagnitude();
-
-  // Get the dominant frequency
-  double peakFrequency = findPeakFrequency();
-  Serial.print("Detected Frequency: ");
-  Serial.println(peakFrequency, 2);
-
-  // Check tuning and light LEDs
-  checkTuning(peakFrequency);}
-  if(digitalRead(button_pin) == HIGH ){ESP.restart();}}
-  double findPeakFrequency() {
-  int peakIndex = 0;
-  double peakValue = 0;
-
-  for (int i = 1; i < SAMPLES / 2; i++) {
-    if (vReal[i] > peakValue) {
-      peakValue = vReal[i];
-      peakIndex = i;
-    }
-  }
-
-  return (peakIndex * SAMPLING_FREQUENCY / SAMPLES);
-}
-
-void checkTuning(double freq) {
-  digitalWrite(FLAT_LED, LOW);
-  digitalWrite(TUNED_LED, LOW);
-  digitalWrite(SHARP_LED, LOW);
-
-  for (int i = 0; i < 6; i++) {
-    double error = abs(freq - guitarFrequencies[i]);
-
-    if (error <= 1.0) {
-      digitalWrite(TUNED_LED, HIGH);
-      return;
-    } else if (freq < guitarFrequencies[i]) {
-      digitalWrite(FLAT_LED, HIGH);
-      return;
-    } else if (freq > guitarFrequencies[i]) {
-      digitalWrite(SHARP_LED, HIGH);
-      return;
-    }
-  }
-}
-
-void restting() {
-  for (int i = 0; i < 2; i++) {
-    digitalWrite(FLAT_LED, HIGH);
-    delay(100);
-    digitalWrite(FLAT_LED, LOW);
-
-    digitalWrite(TUNED_LED, HIGH);
-    delay(100);
-    digitalWrite(TUNED_LED, LOW);
-
-    digitalWrite(SHARP_LED, HIGH);
-    delay(100);
-    digitalWrite(SHARP_LED, LOW);
-    delay(500);
-  }
-}
 14/04/25, 11:21 am - Anuj-Sidam: ek button_pin cha typo hota
 14/04/25, 11:21 am - Anuj-Sidam: but dealyBuffer chaa ek erroer yet ahe
 14/04/25, 11:22 am - Anuj-Sidam: to setup madhe define kela naa
@@ -494,324 +172,8 @@ void restting() {
 14/04/25, 11:22 am - Anuj-Sidam: teva error solve hote
 14/04/25, 11:23 am - Anuj-Sidam: but setup madhe define kela var that should not suppose to be the case
 14/04/25, 11:24 am - Ashish (ECE) ( VNIT): This message was deleted
-14/04/25, 11:25 am - Ashish (ECE) ( VNIT): #include <Arduino.h>
-#include <driver/i2s.h>
-#include <arduinoFFT.h>
-#define I2S_NUM I2S_NUM_0
-#define SAMPLE_RATE 44100 // Standard CD-quality audio
-#define BUFFER_SIZE 22052 // Delay buffer size
-#define ADC_PIN 34 // Guitar input (Analog)
-#define button_pin 2
-#define DELAY_MS 500 // Delay time in milliseconds
-// Pin definitions
-const int MIC_PIN = 34;        // ADC pin for microphone input
-const int FLAT_LED = 26;
-const int TUNED_LED = 14;
-const int SHARP_LED = 27;
-// FFT parameters
-const uint16_t SAMPLES = 1024;                     // Must be a power of 2
-const double SAMPLING_FREQUENCY = 40000.0;    
-     // Hz
-double vReal[SAMPLES];
-double vImag[SAMPLES];
-
-ArduinoFFT FFT = ArduinoFFT(vReal, vImag, SAMPLES, SAMPLING_FREQUENCY);
-
-// Standard guitar string frequencies (E A D G B e)
-const double guitarFrequencies[6] = {82.41, 110.00, 146.83, 196.00, 246.94, 329.63};
- // Delay buffer
-int delayIndex = 0;
-void setupI2S() {
-i2s_config_t i2s_config = {
-.mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_TX),
-.sample_rate = SAMPLE_RATE,
-.bits_per_sample = I2S_BITS_PER_SAMPLE_16BIT,
-.channel_format = I2S_CHANNEL_FMT_RIGHT_LEFT,
-.communication_format = I2S_COMM_FORMAT_STAND_I2S,
-.intr_alloc_flags = 0,
-.dma_buf_count = 8,
-.dma_buf_len = 512,
-.use_apll = false
-};
-i2s_driver_install(I2S_NUM, &i2s_config, 0, NULL);
-i2s_pin_config_t pin_config = {
-.bck_io_num = 26,
-.ws_io_num = 25,
-.data_out_num = 22,
-.data_in_num = -1
-};
-i2s_set_pin(I2S_NUM, &pin_config);
-}
-int flag=0;
-int16_t delayBuffer[BUFFER_SIZE];
-void setup() {
-pinMode(buttonPin, INPUT);
-if(digitalRead(button_pin) == HIGH ){
-
-Serial.begin(115200);
-setupI2S();
-memset(delayBuffer, 0, sizeof(delayBuffer));
-flag=1;}
-else{  Serial.begin(115200);
-  analogReadResolution(12); // For ESP32 (0–4095)
-
-  pinMode(FLAT_LED, OUTPUT);
-  pinMode(TUNED_LED, OUTPUT);
-  pinMode(SHARP_LED, OUTPUT);
-
-  restting(); // Optional: blink all LEDs to indicate startup
-  }}
-void loop() {
-if(flag==1){
-int16_t sample;
-// Read guitar input (ADC)
-
-sample = (analogRead(ADC_PIN) - 2048) << 4;//centering around zero and scaling up to 16bit size
- // Scale up to match 16-bit audio
-// Apply delay effect
-int16_t delayedSample = delayBuffer[delayIndex];
-delayBuffer[delayIndex] = sample; // Store current sample in delay buffer
- delayIndex = (delayIndex + 1) % (SAMPLE_RATE * DELAY_MS / 1000);
-int16_t outputSample = (sample + delayedSample) / 2; // Mix dry and delayed signal
-// Send audio to I²S
-size_t bytes_written;
-i2s_write(I2S_NUM, &outputSample, sizeof(outputSample), &bytes_written, portMAX_DELAY);
-if(digitalRead(button_pin) == LOW ){ESP.restart();}}
-else{// Sample audio
-  unsigned long samplingPeriodUs = 1000000 / SAMPLING_FREQUENCY;
-  unsigned long timer;
-
-  for (int i = 0; i < SAMPLES; i++) {
-    timer = micros();
-    vReal[i] = analogRead(MIC_PIN);
-    vImag[i] = 0;
-    while (micros() - timer < samplingPeriodUs);
-  }
-
-  // Perform FFT
-  FFT.windowing(FFT_WIN_TYP_HAMMING, FFT_FORWARD);
-  FFT.compute(FFT_FORWARD);
-  FFT.complexToMagnitude();
-
-  // Get the dominant frequency
-  double peakFrequency = findPeakFrequency();
-  Serial.print("Detected Frequency: ");
-  Serial.println(peakFrequency, 2);
-
-  // Check tuning and light LEDs
-  checkTuning(peakFrequency);}
-  if(digitalRead(button_pin) == HIGH ){ESP.restart();}}
-  double findPeakFrequency() {
-  int peakIndex = 0;
-  double peakValue = 0;
-
-  for (int i = 1; i < SAMPLES / 2; i++) {
-    if (vReal[i] > peakValue) {
-      peakValue = vReal[i];
-      peakIndex = i;
-    }
-  }
-
-  return (peakIndex * SAMPLING_FREQUENCY / SAMPLES);
-}
-
-void checkTuning(double freq) {
-  digitalWrite(FLAT_LED, LOW);
-  digitalWrite(TUNED_LED, LOW);
-  digitalWrite(SHARP_LED, LOW);
-
-  for (int i = 0; i < 6; i++) {
-    double error = abs(freq - guitarFrequencies[i]);
-
-    if (error <= 1.0) {
-      digitalWrite(TUNED_LED, HIGH);
-      return;
-    } else if (freq < guitarFrequencies[i]) {
-      digitalWrite(FLAT_LED, HIGH);
-      return;
-    } else if (freq > guitarFrequencies[i]) {
-      digitalWrite(SHARP_LED, HIGH);
-      return;
-    }
-  }
-}
-
-void restting() {
-  for (int i = 0; i < 2; i++) {
-    digitalWrite(FLAT_LED, HIGH);
-    delay(100);
-    digitalWrite(FLAT_LED, LOW);
-
-    digitalWrite(TUNED_LED, HIGH);
-    delay(100);
-    digitalWrite(TUNED_LED, LOW);
-
-    digitalWrite(SHARP_LED, HIGH);
-    delay(100);
-    digitalWrite(SHARP_LED, LOW);
-    delay(500);
-  }
-}
 14/04/25, 11:25 am - Ashish (ECE) ( VNIT): scope cha issue ye na... so globle define kela tyala
 14/04/25, 11:26 am - Anuj-Sidam: done
-14/04/25, 11:26 am - Anuj-Sidam: #include <Arduino.h>
-#include <driver/i2s.h>
-#include <arduinoFFT.h>
-#define I2S_NUM I2S_NUM_0
-#define SAMPLE_RATE 44100 // Standard CD-quality audio
-#define BUFFER_SIZE 22052 // Delay buffer size
-#define ADC_PIN 34 // Guitar input (Analog)
-#define button_pin 2
-#define DELAY_MS 500 // Delay time in milliseconds
-// Pin definitions
-const int MIC_PIN = 34;        // ADC pin for microphone input
-const int FLAT_LED = 26;
-const int TUNED_LED = 14;
-const int SHARP_LED = 27;
-// FFT parameters
-const uint16_t SAMPLES = 1024;                     // Must be a power of 2
-const double SAMPLING_FREQUENCY = 40000.0;    
-     // Hz
-double vReal[SAMPLES];
-double vImag[SAMPLES];
-
-ArduinoFFT FFT = ArduinoFFT(vReal, vImag, SAMPLES, SAMPLING_FREQUENCY);
-
-// Standard guitar string frequencies (E A D G B e)
-const double guitarFrequencies[6] = {82.41, 110.00, 146.83, 196.00, 246.94, 329.63};
- // Delay buffer
-int delayIndex = 0;
-void setupI2S() {
-i2s_config_t i2s_config = {
-.mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_TX),
-.sample_rate = SAMPLE_RATE,
-.bits_per_sample = I2S_BITS_PER_SAMPLE_16BIT,
-.channel_format = I2S_CHANNEL_FMT_RIGHT_LEFT,
-.communication_format = I2S_COMM_FORMAT_STAND_I2S,
-.intr_alloc_flags = 0,
-.dma_buf_count = 8,
-.dma_buf_len = 512,
-.use_apll = false
-};
-i2s_driver_install(I2S_NUM, &i2s_config, 0, NULL);
-i2s_pin_config_t pin_config = {
-.bck_io_num = 26,
-.ws_io_num = 25,
-.data_out_num = 22,
-.data_in_num = -1
-};
-i2s_set_pin(I2S_NUM, &pin_config);
-}
-int flag=0;
-int16_t delayBuffer[BUFFER_SIZE];
-void setup() {
-pinMode(button_pin, INPUT);
-if(digitalRead(button_pin) == HIGH ){
-
-Serial.begin(115200);
-setupI2S();
-memset(delayBuffer, 0, sizeof(delayBuffer));
-flag=1;}
-else{  Serial.begin(115200);
-  analogReadResolution(12); // For ESP32 (0–4095)
-
-  pinMode(FLAT_LED, OUTPUT);
-  pinMode(TUNED_LED, OUTPUT);
-  pinMode(SHARP_LED, OUTPUT);
-
-  restting(); // Optional: blink all LEDs to indicate startup
-  }}
-void loop() {
-if(flag==1){
-int16_t sample;
-// Read guitar input (ADC)
-
-sample = (analogRead(ADC_PIN) - 2048) << 4;//centering around zero and scaling up to 16bit size
- // Scale up to match 16-bit audio
-// Apply delay effect
-int16_t delayedSample = delayBuffer[delayIndex];
-delayBuffer[delayIndex] = sample; // Store current sample in delay buffer
- delayIndex = (delayIndex + 1) % (SAMPLE_RATE * DELAY_MS / 1000);
-int16_t outputSample = (sample + delayedSample) / 2; // Mix dry and delayed signal
-// Send audio to I²S
-size_t bytes_written;
-i2s_write(I2S_NUM, &outputSample, sizeof(outputSample), &bytes_written, portMAX_DELAY);
-if(digitalRead(button_pin) == LOW ){ESP.restart();}}
-else{// Sample audio
-  unsigned long samplingPeriodUs = 1000000 / SAMPLING_FREQUENCY;
-  unsigned long timer;
-
-  for (int i = 0; i < SAMPLES; i++) {
-    timer = micros();
-    vReal[i] = analogRead(MIC_PIN);
-    vImag[i] = 0;
-    while (micros() - timer < samplingPeriodUs);
-  }
-
-  // Perform FFT
-  FFT.windowing(FFT_WIN_TYP_HAMMING, FFT_FORWARD);
-  FFT.compute(FFT_FORWARD);
-  FFT.complexToMagnitude();
-
-  // Get the dominant frequency
-  double peakFrequency = findPeakFrequency();
-  Serial.print("Detected Frequency: ");
-  Serial.println(peakFrequency, 2);
-
-  // Check tuning and light LEDs
-  checkTuning(peakFrequency);}
-  if(digitalRead(button_pin) == HIGH ){ESP.restart();}}
-  double findPeakFrequency() {
-  int peakIndex = 0;
-  double peakValue = 0;
-
-  for (int i = 1; i < SAMPLES / 2; i++) {
-    if (vReal[i] > peakValue) {
-      peakValue = vReal[i];
-      peakIndex = i;
-    }
-  }
-
-  return (peakIndex * SAMPLING_FREQUENCY / SAMPLES);
-}
-
-void checkTuning(double freq) {
-  digitalWrite(FLAT_LED, LOW);
-  digitalWrite(TUNED_LED, LOW);
-  digitalWrite(SHARP_LED, LOW);
-
-  for (int i = 0; i < 6; i++) {
-    double error = abs(freq - guitarFrequencies[i]);
-
-    if (error <= 1.0) {
-      digitalWrite(TUNED_LED, HIGH);
-      return;
-    } else if (freq < guitarFrequencies[i]) {
-      digitalWrite(FLAT_LED, HIGH);
-      return;
-    } else if (freq > guitarFrequencies[i]) {
-      digitalWrite(SHARP_LED, HIGH);
-      return;
-    }
-  }
-}
-
-void restting() {
-  for (int i = 0; i < 2; i++) {
-    digitalWrite(FLAT_LED, HIGH);
-    delay(100);
-    digitalWrite(FLAT_LED, LOW);
-
-    digitalWrite(TUNED_LED, HIGH);
-    delay(100);
-    digitalWrite(TUNED_LED, LOW);
-
-    digitalWrite(SHARP_LED, HIGH);
-    delay(100);
-    digitalWrite(SHARP_LED, LOW);
-    delay(500);
-  }
-}
 14/04/25, 11:26 am - Anuj-Sidam: buttonPin typo fix karr brooo
 14/04/25, 11:26 am - Anuj-Sidam: its button_pin
 14/04/25, 11:26 am - Anuj-Sidam: mi fix kela ahe yat
@@ -829,9 +191,6 @@ void restting() {
 14/04/25, 10:52 pm - Ashish (ECE) ( VNIT): ha na yaar... aani prajwal pn respond nahiye krt ptkn....
 14/04/25, 11:09 pm - Anuj-Sidam: <Media omitted>
 15/04/25, 10:48 am - Ashish (ECE) ( VNIT): Are tyanchi website vgare ye ka?
-15/04/25, 10:50 am - Anuj-Sidam: https://www.sharmaelectronicshop.in/
-15/04/25, 10:51 am - Anuj-Sidam: https://www.webotricks.com/
-15/04/25, 10:51 am - Anuj-Sidam: https://www.makestore.in/?srsltid=AfmBOoraLl75j0NlbNcokTC7fh9fRY7PCiiAMrWhdjCcpg_drG9-fTqO
 15/04/25, 10:52 am - Ashish (ECE) ( VNIT): Kk
 15/04/25, 11:19 am - Ashish (ECE) ( VNIT): bhai i2s to analog converter kuthech nahiye.... sgla  code change krawa lagnar.... aani output chi quality pn shitty asnr.... ky kru??? change kru hoy code??
 15/04/25, 11:43 am - Anuj-Sidam: Baghu lunch nantaar
@@ -869,43 +228,6 @@ void restting() {
 15/04/25, 1:00 pm - Ashish (ECE) ( VNIT): chaan... ti aata rojach swatha ghetiye ig
 15/04/25, 1:44 pm - Ashish (ECE) ( VNIT): wait for half hr bhai...
 15/04/25, 1:46 pm - Anuj-Sidam: Anghol zali nahi kay
-15/04/25, 6:28 pm - Ashish (ECE) ( VNIT): #include <WiFi.h>
-#include <ArduinoOTA.h>
-
-const char* ssid = "YourWiFiSSID";
-const char* password = "YourWiFiPassword";
-
-void setup() {
-  Serial.begin(115200);
-  WiFi.begin(ssid, password);
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
-  Serial.println("Connected to WiFi");
-
-  ArduinoOTA.setHostname("ESP32_OTA");
-
-  ArduinoOTA.onStart([]() {
-    Serial.println("Start updating...");
-  });
-  ArduinoOTA.onEnd([]() {
-    Serial.println("\nUpdate Complete");
-  });
-  ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
-    Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
-  });
-  ArduinoOTA.onError([](ota_error_t error) {
-    Serial.printf("Error[%u]: ", error);
-  });
-
-  ArduinoOTA.begin();
-  Serial.println("OTA Ready");
-}
-
-void loop() {
-  ArduinoOTA.handle();  // Must call regularly
-}
 16/04/25, 1:32 pm - Ashish (ECE) ( VNIT): Workshop la yetana mazi esp chi cable gheun yeshil ka....mla lagnr ye aata ti
 16/04/25, 1:32 pm - Anuj-Sidam: 👍
 17/04/25, 9:20 am - Anuj-Sidam: <Media omitted>
@@ -1074,9 +396,6 @@ void loop() {
 18/09/25, 12:01 am - Anuj-Sidam: <Media omitted>
 18/09/25, 6:23 am - Ashish (ECE) ( VNIT): Linkedin bhai ...🤡
 19/09/25, 9:32 am - Anuj-Sidam: <Media omitted>
-20/09/25, 7:46 am - Anuj-Sidam: https://youtu.be/wsHt2YReQzA?si=b-c3EogNeO1MTt_S 
-
-Zuck is not Zucking
 02/10/25, 5:41 pm - Ashish (ECE) ( VNIT): Bhai varad n sangitly tula help kryla.... kahi help pahije asel tr sang
 04/10/25, 7:26 am - Anuj-Sidam: <Media omitted>
 04/10/25, 4:10 pm - Ashish (ECE) ( VNIT): bhai tya ble chya backend chya files nahiyet GitHub vr upload kelelya… krtos ka time asel tr?
@@ -1106,28 +425,18 @@ Zuck is not Zucking
 08/10/25, 9:48 am - Ashish (ECE) ( VNIT): Ha bhai.... always
 08/10/25, 9:48 am - Anuj-Sidam: <Media omitted>
 08/10/25, 9:48 am - Anuj-Sidam: <Media omitted>
-08/10/25, 10:47 am - Anuj-Sidam: https://www.reddit.com/r/ElectricalEngineering/s/MK9VdJ2Cb4. 😋🤤🤤😋
-08/10/25, 9:53 pm - Anuj-Sidam: https://youtu.be/GYlNoAMBY6o?si=V6L1D73o-_1JeaWX
-09/10/25, 2:20 pm - Anuj-Sidam: <Media omitted>
 10/10/25, 9:05 am - Anuj-Sidam: Nikhil ko 4 ros pay karna xerox kee
 10/10/25, 10:21 am - Ashish (ECE) ( VNIT): Haa
 11/10/25, 8:14 am - Anuj-Sidam: <Media omitted>
 12/10/25, 2:17 pm - Ashish (ECE) ( VNIT): saltnpepper069_45646
 12/10/25, 2:18 pm - Anuj-Sidam: req sent accept kar
 13/10/25, 6:42 pm - Ashish (ECE) ( VNIT): I'm in class bruhh
-15/10/25, 8:50 am - Ashish (ECE) ( VNIT): 
-15/10/25, 8:50 am - Ashish (ECE) ( VNIT): <Media omitted>
-15/10/25, 8:50 am - Ashish (ECE) ( VNIT): <Media omitted>
-15/10/25, 8:50 am - Ashish (ECE) ( VNIT): <Media omitted>
 15/10/25, 10:39 am - Ashish (ECE) ( VNIT): Mla nahi watt jmel aata print la.... try kren aata…. kinva mg lunch break madhech
-15/10/25, 10:39 am - Ashish (ECE) ( VNIT): <Media omitted>
-15/10/25, 10:39 am - Ashish (ECE) ( VNIT): <Media omitted>
-15/10/25, 10:40 am - Anuj-Sidam: <Media omitted>
 15/10/25, 10:52 am - Ashish (ECE) ( VNIT): Kidhr h bruhh?
 17/10/25, 11:46 am - Anuj-Sidam: Wtf bruh
 17/10/25, 11:46 am - Anuj-Sidam: Co-founder 🤌🤌
 17/10/25, 11:49 am - Ashish (ECE) ( VNIT): <Media omitted>
-17/10/25, 2:10 pm - Anuj-Sidam: https://keen-pelican-b15.notion.site/Startup-28f2555592448000a40df84f9113cd95 Aren't u having 💦💦💦 , by just looking
+17/10/25, 2:10 pm - Anuj-Sidam: Aren't u having 💦💦💦 , by just looking
 17/10/25, 2:10 pm - Anuj-Sidam: Cum to Notion My Friend
 17/10/25, 5:03 pm - Anuj-Sidam: bhai tu pan app madhe kaam karuch shkate without android studio just app laa mobile madhe load karr dev mode on karun
 18/10/25, 12:19 pm - Ashish (ECE) ( VNIT): Accha....
@@ -1136,90 +445,8 @@ Zuck is not Zucking
 27/10/25, 3:05 pm - Anuj-Sidam: <Media omitted>
 27/10/25, 3:20 pm - Ashish (ECE) ( VNIT): Ok bhai.... krto unblock😅
 27/10/25, 9:34 pm - Ashish (ECE) ( VNIT): Milal ka kahi?
-27/10/25, 9:34 pm - Ashish (ECE) ( VNIT): https://youtu.be/tOIbvvLSrTA?si=RGYpCSHUbx_O1pz9
 27/10/25, 9:42 pm - Ashish (ECE) ( VNIT): Are icd chya experiment ch naaw ky hota?
-27/10/25, 9:46 pm - Ashish (ECE) ( VNIT): Yes — here are **other cheap, fast (<3 days), >1 GHz microwave projects under ~₹500–800** that still look “legit” for a demo.
-
----
-
-## 1) **2.4 GHz Helical Antenna** (for Wi-Fi / SDR)
-
-* Wind copper wire on a plastic tube (≈ 40 mm dia), 4–6 turns, feed with SMA
-* Shows: circular polarization, directivity, antenna design
-* Cost: ₹200–400
-* Tools: soldering, drill
-* Demo: RSSI improvement vs stock antenna
-
----
-
-## 2) **Wi-Fi / 2.4 GHz Patch Antenna on FR-4 copper board**
-
-* Single-layer patch etched/knife-cut from PCB
-* Shows: microstrip theory, resonance, return-loss (if VNA)
-* Cost: ₹150–300 (single copper-clad board)
-* Demo: RSSI test + pattern test
-
----
-
-## 3) **SMA Directional Coupler (1–3 GHz) using PCB / copper tape**
-
-* Build a simple quarter-wave microstrip coupled-line coupler
-* Shows: S-parameters, coupling, isolation, directivity
-* Cost: ₹150–200 (PCB + SMA)
-* Demo: Use Wi-Fi signal and show coupled port power vs through
-
----
-
-## 4) **2.4 GHz Rectenna (Microwave Energy Harvester)**
-
-* Use patch or dipole feeding a Schottky diode + load
-* Shows: wireless power harvesting concept
-* Cost: ₹300–500
-* Demo: Harvest from router or phone hotspot; show DC output on multimeter
-
----
-
-## 5) **Gunn-diode radar using old STB / LNB front end (repurposed)**
-
-* Salvage 10 GHz LNB front-end and repurpose as Doppler motion sensor
-* Shows: microwave mixers & Doppler shift
-* Cost: ₹0–300 (scrap electronics)
-* Demo: Detect hand motion with audio readout
-
----
-
-## 6) **DIY ESR / VSWR “poor-man” reflectometer for 2.4 GHz**
-
-* Split known Wi-Fi source into DUT + detector using diode / coupler
-* Shows: reflections / matching concepts without VNA
-* Cost: ₹200–400
-* Demo: Compare matched load vs open vs antenna
-
----
-
-## Best quick choices for **3 days + ₹500–600**
-
-| If you want…                                  | Do this                                      |
-| --------------------------------------------- | -------------------------------------------- |
-| Easiest, zero-risk success                    | **Cantenna** or **Helical**                  |
-| Something more “engineering-ish”              | **Patch antenna**                            |
-| Something “uncommon / impressive”             | **Rectenna**                                 |
-| Something demonstrating microwave measurement | **Directional coupler** or **Reflectometer** |
-| Something system-level (no design)            | **Radar using scrap LNB**                    |
-
----
-
-## If you tell me one thing, I will choose the best for you now:
-
-**Answer this in one line:**
-
-```
-You prefer: (A) Antenna  (B) Measurement/Detector  (C) System-level demo
-```
-
-And I will pick the exact project + give the build plan and materials list.
 27/10/25, 9:49 pm - Ashish (ECE) ( VNIT): Yatl bghych ka kahi?
-27/10/25, 10:13 pm - Anuj-Sidam: https://youtu.be/Ftfm33FU5aA?si=cZ5J-_0KSyQsMg4M
 27/10/25, 10:13 pm - Anuj-Sidam: Only amplifier wala part
 28/10/25, 1:18 pm - Ashish (ECE) ( VNIT): Are icd cha time domain wala amplification dakhwnra plot yetoy ka tuza nit?
 28/10/25, 1:18 pm - Anuj-Sidam: Nope
@@ -1263,24 +490,7 @@ And I will pick the exact project + give the build plan and materials list.
 12/11/25, 4:01 pm - Ashish (ECE) ( VNIT): Lab la yenr yes ka?
 12/11/25, 4:02 pm - Ashish (ECE) ( VNIT): Hello 👋
 12/11/25, 7:20 pm - Ashish (ECE) ( VNIT): Bhai dcom ch psk, sdr ani delta modulator vagere zal asel tr pathwto ka please?
-12/11/25, 7:21 pm - Anuj-Sidam: 
-12/11/25, 7:21 pm - Anuj-Sidam: <Media omitted>
-12/11/25, 7:21 pm - Anuj-Sidam: <Media omitted>
-12/11/25, 7:21 pm - Anuj-Sidam: <Media omitted>
-12/11/25, 7:21 pm - Anuj-Sidam: <Media omitted>
-12/11/25, 7:21 pm - Anuj-Sidam: <Media omitted>
-12/11/25, 7:21 pm - Anuj-Sidam: <Media omitted>
-12/11/25, 7:21 pm - Anuj-Sidam: <Media omitted>
-12/11/25, 7:21 pm - Anuj-Sidam: <Media omitted>
-12/11/25, 7:21 pm - Anuj-Sidam: <Media omitted>
-12/11/25, 7:21 pm - Anuj-Sidam: <Media omitted>
-12/11/25, 7:21 pm - Anuj-Sidam: <Media omitted>
-12/11/25, 7:21 pm - Anuj-Sidam: <Media omitted>
-12/11/25, 7:21 pm - Anuj-Sidam: <Media omitted>
-12/11/25, 7:21 pm - Anuj-Sidam: <Media omitted>
 12/11/25, 7:22 pm - Ashish (ECE) ( VNIT): Thank you bhai
-12/11/25, 7:25 pm - Anuj-Sidam: https://x.com/trev3d/status/1988356003616743508?t=EqefSVJsZgFDFU1fF75oug&s=08
-12/11/25, 7:26 pm - Anuj-Sidam: 🤌🤌🤌
 13/11/25, 7:57 pm - Ashish (ECE) ( VNIT): Brother what?!
 13/11/25, 7:57 pm - Anuj-Sidam: Kara chaa kaa??
 13/11/25, 8:05 pm - Ashish (ECE) ( VNIT): Ha bhai... krawa tr lagnrch ye.... but overlap hoty na Eval aani te ig...
@@ -1295,24 +505,6 @@ And I will pick the exact project + give the build plan and materials list.
 16/11/25, 5:08 pm - Anuj-Sidam: <Media omitted>
 16/11/25, 5:08 pm - Anuj-Sidam: ---
 16/11/25, 5:08 pm - Ashish (ECE) ( VNIT): 3 8 encoder decoder nntrche?
-16/11/25, 5:08 pm - Anuj-Sidam: 
-16/11/25, 5:08 pm - Anuj-Sidam: <Media omitted>
-16/11/25, 5:08 pm - Anuj-Sidam: <Media omitted>
-16/11/25, 5:08 pm - Anuj-Sidam: <Media omitted>
-16/11/25, 5:08 pm - Anuj-Sidam: <Media omitted>
-16/11/25, 5:08 pm - Anuj-Sidam: ----
-16/11/25, 5:09 pm - Anuj-Sidam: 
-16/11/25, 5:09 pm - Anuj-Sidam: <Media omitted>
-16/11/25, 5:09 pm - Anuj-Sidam: <Media omitted>
-16/11/25, 5:09 pm - Anuj-Sidam: <Media omitted>
-16/11/25, 5:09 pm - Anuj-Sidam: <Media omitted>
-16/11/25, 5:10 pm - Anuj-Sidam: 8th incoming
-16/11/25, 5:10 pm - Anuj-Sidam: 
-16/11/25, 5:10 pm - Anuj-Sidam: <Media omitted>
-16/11/25, 5:10 pm - Anuj-Sidam: <Media omitted>
-16/11/25, 5:10 pm - Anuj-Sidam: <Media omitted>
-16/11/25, 5:10 pm - Anuj-Sidam: <Media omitted>
-16/11/25, 5:10 pm - Anuj-Sidam: <Media omitted>
 16/11/25, 5:11 pm - Ashish (ECE) ( VNIT): Thank you bhai.....
 16/11/25, 5:11 pm - Anuj-Sidam: ICD project karat ahe tu adhi kahi kela ka ???
 16/11/25, 5:12 pm - Ashish (ECE) ( VNIT): Kahi jast nahiye kelel.... bs tya resistors chi ladder bnwun thevliye.... opamp bnwawa lagnr..... mg bakich 15 20 min ch kaam ye
@@ -1321,13 +513,7 @@ And I will pick the exact project + give the build plan and materials list.
 16/11/25, 6:56 pm - Ashish (ECE) ( VNIT): Vrti pathwlelya experiments che
 16/11/25, 6:58 pm - Anuj-Sidam: ohh wait
 16/11/25, 7:01 pm - Ashish (ECE) ( VNIT): Ha
-16/11/25, 7:08 pm - Anuj-Sidam: <Media omitted>
-16/11/25, 7:09 pm - Anuj-Sidam: <Media omitted>
-16/11/25, 7:09 pm - Anuj-Sidam: <Media omitted>
-16/11/25, 7:09 pm - Anuj-Sidam: <Media omitted>
 16/11/25, 7:16 pm - Ashish (ECE) ( VNIT): Thank you bhai🥵
-17/11/25, 11:05 am - Ashish (ECE) ( VNIT): <Media omitted>
-17/11/25, 10:55 pm - Anuj-Sidam: <Media omitted>
 18/11/25, 4:42 am - Ashish (ECE) ( VNIT): Naya dalawa le
 18/11/25, 6:46 am - Ashish (ECE) ( VNIT): Dusrya drive madhe shift kr mothe programs
 18/11/25, 10:42 pm - Anuj-Sidam: Tomorrow 12 to 1 pm in RF lecture , remaining people have to show the rf project to Arvind sir
@@ -1338,11 +524,6 @@ And I will pick the exact project + give the build plan and materials list.
 19/11/25, 12:37 pm - Ashish (ECE) ( VNIT): Bhai Arvind cabin madhe ye ka te bghtos ka
 19/11/25, 3:33 pm - Anuj-Sidam: Broo laptop anshil
 19/11/25, 3:37 pm - Ashish (ECE) ( VNIT): Yes bro on the way
-21/11/25, 8:35 am - Anuj-Sidam: This is to bring to your attention that a few students of higher semester UG & PG have not yet submitted their online course feedback for W-2025 through their AIMS login. Submission of online course feedback is mandatory for all students.
-
-The Online Course Feedback portal is reopened from 20th to 24th November 2025 (for the students admitted in 2024 and before) 
-
-It is requested to complete this process within the stipulated time frame.
 22/11/25, 12:08 pm - Anuj-Sidam: https://x.com/Ganeshuor/status/1991845073089429521?t=1hdYEeQ7WN9q3kU0ezkS1w&s=08
 22/11/25, 12:08 pm - Anuj-Sidam: Yeahh now we are talking
 24/11/25, 8:30 am - Anuj-Sidam: You deleted this message
@@ -1463,10 +644,8 @@ It is requested to complete this process within the stipulated time frame.
 28/12/25, 2:50 pm - Anuj-Sidam: Yes
 Yes
 28/12/25, 2:51 pm - Ashish (ECE) ( VNIT): <Media omitted>
-28/12/25, 2:52 pm - Anuj-Sidam: https://github.com/AJ-SM/UpStart.Org
 28/12/25, 2:53 pm - Ashish (ECE) ( VNIT): private ye ig repo... disena
 28/12/25, 2:54 pm - Anuj-Sidam: GitHub id ?
-28/12/25, 2:55 pm - Ashish (ECE) ( VNIT): https://github.com/mr-00x
 28/12/25, 2:55 pm - Anuj-Sidam: check mail
 28/12/25, 5:02 pm - Anuj-Sidam: <Media omitted>
 28/12/25, 5:02 pm - Anuj-Sidam: Isn't this looks good
@@ -1533,8 +712,6 @@ Yes
 29/12/25, 12:17 pm - Ashish (ECE) ( VNIT): Accha
 29/12/25, 12:34 pm - Anuj-Sidam: <Media omitted>
 29/12/25, 12:35 pm - Ashish (ECE) ( VNIT): Accha
-30/12/25, 10:58 am - Anuj-Sidam: <Media omitted>
-30/12/25, 11:50 am - Anuj-Sidam: <Media omitted>
 30/12/25, 2:41 pm - Ashish (ECE) ( VNIT): Bro professor lok kse register krnr ?
 30/12/25, 2:43 pm - Anuj-Sidam: Via app
 30/12/25, 2:43 pm - Ashish (ECE) ( VNIT): Ha... mg tyachi register screen?
@@ -1574,23 +751,13 @@ Yes
 30/12/25, 3:18 pm - Ashish (ECE) ( VNIT): Ha... kru ka call?
 30/12/25, 3:20 pm - Anuj-Sidam: Haa
 30/12/25, 5:00 pm - Ashish (ECE) ( VNIT): Bhai ajun ky ky fetch kraw lagnr ye te sang, ts ts add kren mi
-30/12/25, 5:39 pm - Ashish (ECE) ( VNIT): Name
-Email id 
-Password 
-Course setup
 30/12/25, 5:39 pm - Ashish (ECE) ( VNIT): Ceo sir cha msg ye
 31/12/25, 7:27 am - Ashish (ECE) ( VNIT): Bro ti file bghitli ka mi add keleli? Kaam krty ka ye? fetches.ts
 31/12/25, 7:39 am - Ashish (ECE) ( VNIT): Also bhai there is no way to verify email right? Apn account create kelya kelya tyana password reset kryla lawla tr? Email vr link jate na tyachi firebase vrun so may be work kru shkel te...wdyt?
 31/12/25, 7:40 am - Ashish (ECE) ( VNIT): Yachyabddl sang mla tula ky watty te... mi face recognition ch ky te bghen aaj ...
 31/12/25, 7:46 am - Ashish (ECE) ( VNIT): I mean... registration chya veles tyana password chi field ch nahi dakhwychi...aapn gibberish password takun dyaycha... aani account create zal ki lagech sign out krun takych...aani mg message dakhwycha ki password create kryal email vr aleli link follow kra mhnun... so tyancha email pn verify hoeel aani password pn bnwtil te lok... wdyt? <This message was edited>
 31/12/25, 8:02 am - Anuj-Sidam: Thaam thodaa evening parant sangto kaamat aho sadyaa
-31/12/25, 8:29 am - Ashish (ECE) ( VNIT): Haaa...chalel
-31/12/25, 1:35 pm - Anuj-Sidam: https://docs.google.com/document/d/1p0OM56fHKjiPEu8v96UB1u9_bCtD7J_OH4ZRjrKyunA/edit?usp=sharing
-
-
-
-
-@⁨Anuj-Sidam⁩ @⁨Ashish (ECE) ( VNIT)⁩  ye React wala code hai for UI of deep sea gradient glass theme...mene try kiya hai convert karneka
+31/12/25, 8:29 am - Ashish (ECE) ( VNIT): ye React wala code hai for UI of deep sea gradient glass theme...mene try kiya hai convert karneka
 31/12/25, 1:35 pm - Anuj-Sidam: Samja BC isko gali dee duga ab mere
 31/12/25, 1:45 pm - Anuj-Sidam: <Media omitted>
 31/12/25, 1:45 pm - Anuj-Sidam: Enrollment number hata de fields me se...jarurat nahi
@@ -1603,7 +770,6 @@ Course setup
 31/12/25, 2:42 pm - Ashish (ECE) ( VNIT): accha... bus function run krke console log krke dekhna sahi se data output ho rha ya nhi dikh rha ya nhi
 31/12/25, 2:45 pm - Anuj-Sidam: bhaai app madhe backend chaa code takna mala thoda appropriate nahi vatat ahe
 31/12/25, 2:46 pm - Ashish (ECE) ( VNIT): bhai firebase chya documentation madhe aani tya pedrotech chya vdo madhe asach kely tyani
-31/12/25, 2:47 pm - Ashish (ECE) ( VNIT): https://youtu.be/2hR-uWjBAgw?si=jVeoWpa_ljEiggrf&t=2429
 31/12/25, 2:50 pm - Anuj-Sidam: nahi ree code nahi , tee taa thik ahe but architecture wise backend seperate karv vataat ahe app chaa
 31/12/25, 2:51 pm - Anuj-Sidam: jar DB ni konta error throw kela joo apan expect wala condition mahde nahi ahee taa pruna flow fuck honaar
 31/12/25, 2:52 pm - Ashish (ECE) ( VNIT): Hmm... te tr aahech...
@@ -1651,25 +817,6 @@ Course setup
 02/01/26, 1:59 pm - Ashish (ECE) ( VNIT): login kelyanntr choose kryla lawyche ka?
 02/01/26, 2:00 pm - Anuj-Sidam: nahi student laa db war write karaachi permission registeration chaa time ch dili pahi je
 02/01/26, 2:01 pm - Ashish (ECE) ( VNIT): Ha... diliy mi already
-02/01/26, 2:02 pm - Ashish (ECE) ( VNIT): rules_version = '2';
-
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /students/{student} {
-      allow read, write,delete: if request.auth !=null && (request.auth.uid==student || exists(/databases/$(database)/documents/Colleges/$(request.auth.uid)));
-    allow create: if request.auth !=null}
-     match /professors/{professor} {
-      allow read, write,delete: if request.auth !=null && (request.auth.uid==professor || exists(/databases/$(database)/documents/Colleges/$(request.auth.uid)));
-    allow create : if request.auth !=null}
-     match /Colleges/{college} {
-      allow read, write: if request.auth !=null && request.auth.uid==college;
-    }
-     match /courses/{course} {
-      allow read, write: if request.auth != null;
-      allow create: if request.auth != null && exists(/databases/$(database)/documents/Colleges/$(request.auth.uid));
-    }
-  }
-}//temporary rules... need to be refined
 02/01/26, 2:02 pm - Ashish (ECE) ( VNIT): yaat doc create krychi permission diliy na
 02/01/26, 2:02 pm - Ashish (ECE) ( VNIT): aani ekda doc create zal ki mg read , write aani dlt chi chi pn milun jatiy
 02/01/26, 2:04 pm - Anuj-Sidam: btw student db madhe kaa create nahi hot ahee ??
@@ -1754,16 +901,7 @@ service cloud.firestore {
 10/01/26, 3:34 pm - Anuj-Sidam: Well well well
 12/01/26, 8:57 am - Anuj-Sidam: <Media omitted>
 12/01/26, 8:58 am - Anuj-Sidam: Cum Fast Gayboy
-14/01/26, 2:36 pm - Anuj-Sidam: Expo token fakta yaa condition war ch change hoto 
-
-
-App reinstall
-User clears app data
-OS update
-Device change
-Firebase refresh
-Switching from Expo Go to standalone APK
-User disables & re-enables notifications
+14/01/26, 2:36 pm - Anuj-Sidam: Expo token fakta yaa condition war ch change hoto
 14/01/26, 2:37 pm - Anuj-Sidam: I guess login cha time la send karu skahto
 14/01/26, 2:37 pm - Ashish (ECE) ( VNIT): Accha..chalel
 14/01/26, 6:38 pm - Anuj-Sidam: Fetching chaa logic syshi madhe ahe kaa ??
@@ -1789,11 +927,6 @@ User disables & re-enables notifications
 15/01/26, 7:31 pm - Ashish (ECE) ( VNIT): Rpi vrun nahi ka feed back deta yenr?
 15/01/26, 7:31 pm - Anuj-Sidam: Karta yenaar mag taa lamba oan
 15/01/26, 7:49 pm - Ashish (ECE) ( VNIT): <Media omitted>
-15/01/26, 7:56 pm - Anuj-Sidam: {
-courseCode,
-acutalToken
-messageToken,
-}
 15/01/26, 7:56 pm - Anuj-Sidam: hee patavnarra endpoint laa
 15/01/26, 7:57 pm - Ashish (ECE) ( VNIT): Challel
 15/01/26, 8:00 pm - Anuj-Sidam: also time <This message was edited>
@@ -1812,94 +945,7 @@ messageToken,
 15/01/26, 10:21 pm - Anuj-Sidam: msgToken
 15/01/26, 10:23 pm - Ashish (ECE) ( VNIT): Accha... changes bgh... ajun ek type ch notification pathwly mi... attendance mark zaly te smjyla
 15/01/26, 10:24 pm - Ashish (ECE) ( VNIT): Accha...chalel... but login tr direct firebase shi contact krun hoty na? So client side ne store kraw lagel msgtoken right?
-15/01/26, 10:27 pm - Anuj-Sidam: import axios from "axios";
-import { Router, Request, Response } from "express";
-
-const message = Router();
-
-/**
- * EXPECTED BODY:
- * {
- *   "uid": "PROF_UID_HERE"
- * }
- */
-message.post("/", async (req: Request, res: Response) => {
-  try {
-    // const { uid } = req.body;
-
-    // if (!uid) {
-    //   return res.status(400).json({ error: "uid is required" });
-    // }
-
-    /**
-     * =============================
-     * STEP 1: FETCH STUDENTS TOKENS
-     * =============================
-     * Replace this with DB query
-     */
-    // const students = await getStudentsByProfUid(uid);
-    const students = ["ExponentPushToken[wAtHn0GhlAKWqi9i8pGh68]",
-      "ExponentPushToken[8XFSU0BixDU9P8hXexs3IK]","ExponentPushToken[nE_9rNL0t32SKGdc99mvNV]"]
-    // students = [{ expoPushToken: "ExponentPushToken[xxxx]" }, ...]
-
-    if (students.length === 0) {
-      return res.status(404).json({ message: "No students found" });
-    }
-
-    /**
-     * =============================
-     * STEP 2: SEND PUSH NOTIFICATIONS
-     * =============================
-     */
-    const notifications = students.map((student: any) => ({
-       
-      to: student,
-      sound: "default",
-      title: "Attendance Open",
-      body: "You can mark your attendance now",
-      data: {
-        type: "attendance",
-        open: true,
-        // profUid: uid,
-      },
-    }));
-
-    const response = await axios.post(
-      "https://exp.host/--/api/v2/push/send",
-      notifications,
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-          "Accept-Encoding": "gzip, deflate",
-        },
-      }
-    );
-
-    return res.json({
-      success: true,
-      sent: notifications.length,
-      expoResponse: response.data,
-    });
-  } catch (error: any) {
-    console.error("Push Error:", error?.response?.data || error.message);
-    return res.status(500).json({ error: "Failed to send notifications" });
-  }
-});
-
-export default message;
 15/01/26, 10:50 pm - Anuj-Sidam: Registration chaa time laa denaar token 👍👍👍
-15/01/26, 10:54 pm - Anuj-Sidam: student regrestraiotn schema       const payload = {
-        college: collegeName,
-        college_id: ID,
-        password: pass,
-        name: name,
-        email: email,
-        enr_no: enroll,
-        Mobileno: monum,
-        courses: coursesPayload,
-        msgToken:msgToken
-      };
 16/01/26, 9:13 am - Anuj-Sidam: Are cumming 🫦
 16/01/26, 10:04 am - Ashish (ECE) ( VNIT): ML python group?
 16/01/26, 10:06 am - Anuj-Sidam: ..
@@ -1999,12 +1045,6 @@ export default message;
 31/01/26, 11:46 am - Ashish (ECE) ( VNIT): Aahe chalu
 31/01/26, 11:47 am - Anuj-Sidam: 👍
 31/01/26, 12:18 pm - Anuj-Sidam: Aunty is back
-31/01/26, 3:12 pm - Anuj-Sidam: <Media omitted>
-31/01/26, 3:12 pm - Anuj-Sidam: <Media omitted>
-31/01/26, 3:12 pm - Anuj-Sidam: <Media omitted>
-31/01/26, 5:13 pm - Anuj-Sidam: <Media omitted>
-01/02/26, 12:42 pm - Anuj-Sidam: <Media omitted>
-01/02/26, 12:43 pm - Anuj-Sidam: <Media omitted>
 01/02/26, 1:05 pm - Ashish (ECE) ( VNIT): Mastch bhai✨️
 03/02/26, 5:14 pm - Anuj-Sidam: Bhai tee courses wala filed madhe registered student student id save honaar kaa ???
 04/02/26, 5:49 pm - Anuj-Sidam: Bruhh 🥀🥀
@@ -2111,19 +1151,6 @@ npm error Invalid tag name "type=module" of package "type=module": Tags may not 
 10/04/26, 11:13 am - Ashish (ECE) ( VNIT): Aani Yat kont token , secret lagt ye ka?
 12/04/26, 3:28 pm - Anuj-Sidam: <Media omitted>
 12/04/26, 3:32 pm - Anuj-Sidam: ..
-12/04/26, 8:16 pm - Anuj-Sidam: {
-  "name": "Asnuj",
-  "email": "andsuj@example.com",
-  "Mobileno": "9876543210",
-  "password": "mypassword123",
-  "college_id": "VNIT123",
-  "department": "ECE"
-}
-13/04/26, 2:12 pm - Ashish (ECE) ( VNIT): <Media omitted>
-13/04/26, 2:12 pm - Ashish (ECE) ( VNIT): <Media omitted>
-13/04/26, 2:12 pm - Ashish (ECE) ( VNIT): <Media omitted>
-13/04/26, 2:12 pm - Ashish (ECE) ( VNIT): <Media omitted>
-13/04/26, 2:12 pm - Ashish (ECE) ( VNIT): <Media omitted>
 18/04/26, 8:37 pm - Ashish (ECE) ( VNIT): Udyachi preparation zali ka bruh? Ks krnr ye udyach?
 18/04/26, 9:21 pm - Ashish (ECE) ( VNIT): Bro? depressed yes ki ky ?
 18/04/26, 9:23 pm - Anuj-Sidam: huh??
@@ -2195,17 +1222,11 @@ npm error Invalid tag name "type=module" of package "type=module": Tags may not 
 01/07/26, 12:04 pm - Ashish (ECE) ( VNIT): Internship kshi chalu ye?
 01/07/26, 12:04 pm - Ashish (ECE) ( VNIT): Stipend zala asel na aata chalu?🤑
 01/07/26, 6:17 pm - Anuj-Sidam: Nahi next month pasna honaar suru
-01/07/26, 6:18 pm - Ashish (ECE) ( VNIT): Ohh accha... nice nice
-
-
-
-
-
+01/07/26, 6:18 pm - Ashish (ECE) ( VNIT): Ohh accha... nice nic
 07/12/24, 5:44 pm - Messages and calls are end-to-end encrypted. Only people in this chat can read, listen to, or share them. *Learn more*
 09/01/25, 10:59 am - Varad (ECE)(VNIT): Kindly join the Google Classroom. 
 Make your Username (name which appears to me ) should be your Rollno. And Name as per records. 
 I will be taking attendance this time through google classrooms. so kindly join through below mentioned link
-
 https://classroom.google.com/c/NzMzNDM2MDg4MzEz?cjc=5cagfje
 10/01/25, 8:14 am - Varad (ECE)(VNIT): MaI proxy lav
 10/01/25, 8:14 am - Varad (ECE)(VNIT): DSP madhe plz
@@ -2257,12 +1278,10 @@ https://classroom.google.com/c/NzMzNDM2MDg4MzEz?cjc=5cagfje
 13/02/25, 10:40 pm - Varad (ECE)(VNIT): 
 20/02/25, 1:39 pm - Anuj-Sidam: <Media omitted>
 21/02/25, 8:25 am - Varad (ECE)(VNIT): <Media omitted>
-21/02/25, 8:25 am - Varad (ECE)(VNIT): 
-22/02/25, 7:27 pm - Anuj-Sidam: https://m.youtube.com/watch?v=AcuQnIXiZ2A&pp=ygUcc2lnbmFscyBhbmQgc3lzdGVtcyBzYW1wbGluZw%3D%3D
+21/02/25, 8:25 am - Varad (ECE)(VNIT):
 23/02/25, 11:02 am - Anuj-Sidam: Dsp janar ??
 23/02/25, 11:11 am - Varad (ECE)(VNIT): Nahi
 23/02/25, 11:20 am - Anuj-Sidam: 👍
-26/03/25, 4:34 pm - Anuj-Sidam: https://chatgpt.com/share/67e3df38-1cac-8004-a6d7-965a2de44787
 04/04/25, 8:10 am - Anuj-Sidam: <Media omitted>
 04/04/25, 8:11 am - Varad (ECE)(VNIT): He konta ahe
 04/04/25, 8:12 am - Anuj-Sidam: Fm Modulation
@@ -2278,155 +1297,14 @@ Apparatus
 Theory 
 Of gnu radio
 Modulated wave Freq component and time component in gnu graph
-04/04/25, 8:24 am - Varad (ECE)(VNIT): This message was deleted
-04/04/25, 8:25 am - Varad (ECE)(VNIT): https://chatgpt.com/share/67ef49bd-7be8-8002-830b-ae9970d51ecd
-05/04/25, 12:54 pm - Varad (ECE)(VNIT): 
-17/04/25, 3:17 pm - Varad (ECE)(VNIT): This message was deleted
-23/04/25, 10:28 am - Varad (ECE)(VNIT): <Media omitted>
-23/04/25, 10:29 am - Varad (ECE)(VNIT): <Media omitted>
-23/04/25, 10:29 am - Anuj-Sidam: <Media omitted>
-23/04/25, 10:30 am - Varad (ECE)(VNIT): .
-23/04/25, 10:31 am - Varad (ECE)(VNIT): .
-23/04/25, 10:31 am - Varad (ECE)(VNIT): .
-23/04/25, 10:40 am - Anuj-Sidam: <Media omitted>
 23/04/25, 10:44 am - Varad (ECE)(VNIT): yes maza pan ala output
 thanks
-26/04/25, 12:25 pm - Varad (ECE)(VNIT): #include <reg51.h>
-
-// Define control pins for ADC
-sbit ADC_ALE = P2^0;
-sbit ADC_START = P2^1;
-sbit ADC_EOC = P2^2;
-sbit ADC_OE = P2^3;
-
-// Define output pin for buzzer
-sbit BUZZER = P1^0;
-
-// Function to initialize ports
-void delay(unsigned int time) {
-    unsigned int i, j;
-    for (i = 0; i < time; i++)
-        for (j = 0; j < 1275; j++);
-}
-
-unsigned char read_ADC() {
-    unsigned char value;
-
-    ADC_ALE = 1;
-    delay(1);
-    ADC_ALE = 0;
-
-    ADC_START = 1;
-    delay(1);
-    ADC_START = 0;
-
-    while (ADC_EOC == 1);  // Wait for end of conversion
-
-    ADC_OE = 1;
-    value = P0;            // Read value from ADC
-    ADC_OE = 0;
-
-    return value;
-}
-
-void main() {
-    unsigned char alcohol_level;
-
-    BUZZER = 0;           // Buzzer off initially
-    while (1) {
-        alcohol_level = read_ADC();
-
-        if (alcohol_level > 100) {  // Threshold value (adjust based on calibration)
-            BUZZER = 1;             // Turn on buzzer
-        } else {
-            BUZZER = 0;             // Turn off buzzer
-        }
-
-        delay(200);
-    }
-}
-26/04/25, 12:27 pm - Anuj-Sidam: <Media omitted>
-26/04/25, 12:36 pm - Anuj-Sidam: ; Define pins (P0)
-GLCD_RS  EQU P0.7
-GLCD_RW  EQU P0.6
-GLCD_EN  EQU P0.5
-GLCD_CS1 EQU P0.4
-GLCD_CS2 EQU P0.3
-GLCD_RST EQU P3.7
-
-ORG 0000H
-MAIN:
-
-    ; Reset the GLCD
-    CLR GLCD_RST
-    ACALL DELAY_10MS
-    SETB GLCD_RST
-    ACALL DELAY_10MS
-
-    ; Enable both chips
-    SETB GLCD_CS1
-    SETB GLCD_CS2
-
-    ; Send Display ON command
-    MOV A, #03FH
-    ACALL GLCD_COMMAND
-
-    ; Set Start Line to 0
-    MOV A, #0C0H
-    ACALL GLCD_COMMAND
-
-    ; Set Page = 0
-    MOV A, #0B8H
-    ACALL GLCD_COMMAND
-
-    ; Set Column = 0
-    MOV A, #040H
-    ACALL GLCD_COMMAND
-
-    SJMP $
-
-;--------------------------------------
-; GLCD_COMMAND: sends command in A to GLCD
-;--------------------------------------
-GLCD_COMMAND:
-    MOV P2, A          ; Put command on data bus
-    CLR GLCD_RS        ; RS = 0 for command
-    CLR GLCD_RW        ; RW = 0 for write
-    SETB GLCD_EN
-    ACALL SHORT_DELAY
-    CLR GLCD_EN
-    RET
-
-;--------------------------------------
-; SHORT_DELAY: ~1ms delay
-;--------------------------------------
-SHORT_DELAY:
-    MOV R7, #200
-D1: DJNZ R7, D1
-    RET
-
-;--------------------------------------
-; DELAY_10MS: delay ~10ms
-;--------------------------------------
-DELAY_10MS:
-    MOV R6, #10
-LOOP10:
-    ACALL SHORT_DELAY
-    DJNZ R6, LOOP10
-    RET
-
-END
-26/04/25, 12:41 pm - Varad (ECE)(VNIT): <Media omitted>
-26/04/25, 3:04 pm - Varad (ECE)(VNIT): <Media omitted>
-26/04/25, 3:55 pm - Varad (ECE)(VNIT): https://github.com/kmhmubin/Password-based-doorlock-system-in-8051-microprocessor/commit/7172a1d83f109a846af10ca1c3433314ea5af56d
 26/04/25, 3:57 pm - Anuj-Sidam: <Media omitted>
 26/04/25, 3:59 pm - Anuj-Sidam: <Media omitted>
 26/04/25, 4:01 pm - Anuj-Sidam: <Media omitted>
 11/05/25, 2:34 pm - Anuj-Sidam: <Media omitted>
 11/05/25, 2:34 pm - Anuj-Sidam: <Media omitted>
 12/05/25, 1:53 pm - Anuj-Sidam: <Media omitted>
-05/08/25, 11:00 pm - Anuj-Sidam: http://localhost:5173/
-05/08/25, 11:02 pm - Anuj-Sidam: http://172.25.107.236:5173/
 09/08/25, 10:11 pm - Anuj-Sidam: <Media omitted>
 10/08/25, 9:28 pm - Varad (ECE)(VNIT): Esp32 milala ka?
 11/08/25, 9:37 pm - Anuj-Sidam: Notes patv <This message was edited>
@@ -2772,178 +1650,6 @@ Form link here - https://forms.gle/xMAJGMoAkMy7HMfG8
 19/12/25, 12:54 pm - Anuj-Sidam: Kiva project GitHub war upload kare <This message was edited>
 19/12/25, 12:56 pm - Varad (ECE)(VNIT): Okay...sadhya light geli ahe ...and laptop charge nahi ahe...sadhya fakt code pathvto ..nantr upload karto
 19/12/25, 12:56 pm - Anuj-Sidam: Okk
-19/12/25, 12:59 pm - Varad (ECE)(VNIT): import 'dart:math';
-import 'dart:io';
-import 'dart:typed_data';
-import 'package:flutter/services.dart';
-import 'package:image/image.dart' as img;
-import 'package:tflite_flutter/tflite_flutter.dart';
-import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
-
-class FaceService {
-  Interpreter? _interpreter;
-  double lastDistance = 0.0; // To show score on screen
-
-  Future<void> initialize() async {
-    try {
-      _interpreter = await Interpreter.fromAsset('assets/mobilefacenet.tflite');
-      print('✅ FaceNet Model Loaded');
-    } catch (e) {
-      print('❌ Failed to load model: $e');
-    }
-  }
-
-  // --- UPDATED: Accepts 'referencePath' to check ANY user ---
-  Future<bool> verifyFace(File capturedImage, String referencePath) async {
-    try {
-      // 1. Process Live Photo
-      img.Image? captured = img.decodeImage(capturedImage.readAsBytesSync());
-      if (captured == null) return false;
-      List<double> capturedEmbedding = _getEmbedding(captured);
-
-      // 2. Process Database Photo (Dynamic!)
-      // We load the SPECIFIC file path (varad or pappa) passed to us
-      ByteData data = await rootBundle.load(referencePath);
-      Uint8List bytes = data.buffer.asUint8List();
-      img.Image? reference = img.decodeImage(bytes);
-      if (reference == null) return false;
-      List<double> referenceEmbedding = _getEmbedding(reference);
-
-      // 3. Compare
-      double distance = _euclideanDistance(capturedEmbedding, referenceEmbedding);
-      lastDistance = distance;
-      print("📏 Distance: $distance");
-
-      // 4. Threshold (1.05 is the safe limit we found)
-      return distance < 1.1; 
-
-    } catch (e) {
-      print("Error: $e");
-      return false;
-    }
-  }
-
-  // --- Helper: Convert Image to Numbers ---
-  List<double> _getEmbedding(img.Image image) {
-    // Crop center square to avoid distortion
-    img.Image resized = img.copyResizeCropSquare(image, size: 112);
-    Float32List input = _imageToFloat32List(resized);
-
-    List<double> output = List.filled(192, 0.0); 
-    var inputs = input.reshape([1, 112, 112, 3]);
-    var outputs = List.filled(1 * 192, 0.0).reshape([1, 192]);
-
-    _interpreter!.run(inputs, outputs);
-    return List<double>.from(outputs[0]);
-  }
-
-  Float32List _imageToFloat32List(img.Image image) {
-    var convertedBytes = Float32List(1 * 112 * 112 * 3);
-    var buffer = Float32List.view(convertedBytes.buffer);
-    int pixelIndex = 0;
-
-    for (var i = 0; i < 112; i++) {
-      for (var j = 0; j < 112; j++) {
-        var pixel = image.getPixel(j, i);
-        buffer[pixelIndex++] = (pixel.r - 128) / 128;
-        buffer[pixelIndex++] = (pixel.g - 128) / 128;
-        buffer[pixelIndex++] = (pixel.b - 128) / 128;
-      }
-    }
-    return convertedBytes;
-  }
-
-  double _euclideanDistance(List<double> e1, List<double> e2) {
-    double sum = 0.0;
-    for (int i = 0; i < e1.length; i++) {
-      sum += pow((e1[i] - e2[i]), 2);
-    }
-    return sqrt(sum);
-  }
-}
-19/12/25, 1:00 pm - Varad (ECE)(VNIT): But ekda code varun kalel ka tula ....karan 6-7 files ahet veg veglya codes che
-19/12/25, 1:00 pm - Varad (ECE)(VNIT): Database service code
-
-import 'package:cloud_firestore/cloud_firestore.dart';
-
-class DatabaseService {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-
-  // 1. GET STUDENT PROFILE (Login Check)
-  Future<Map<String, dynamic>?> getStudent(String id) async {
-    try {
-      DocumentSnapshot doc = await _firestore.collection('students').doc(id).get();
-      if (doc.exists) {
-        return doc.data() as Map<String, dynamic>;
-      }
-      return null;
-    } catch (e) {
-      print("Error fetching student: $e");
-      return null;
-    }
-  }
-
-  // 2. CHECK DEVICE SECURITY (Locking Logic)
-  Future<String> checkDeviceBinding(String id, String currentDeviceId) async {
-    try {
-      DocumentReference docRef = _firestore.collection('students').doc(id);
-      DocumentSnapshot doc = await docRef.get();
-
-      if (!doc.exists) return "User Not Found";
-
-      Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
-      String? registeredDevice = data['deviceId'];
-
-      // A. If field is empty -> FIRST TIME LOGIN -> Lock it to this phone!
-      if (registeredDevice == null || registeredDevice.isEmpty) {
-        await docRef.update({'deviceId': currentDeviceId});
-        return "Bound"; 
-      } 
-      // B. If match -> Allow
-      else if (registeredDevice == currentDeviceId) {
-        return "Allowed"; 
-      } 
-      // C. If mismatch -> BLOCK (Proxy Attempt)
-      else {
-        return "Blocked"; 
-      }
-    } catch (e) {
-      print("Error checking device: $e");
-      return "Error";
-    }
-  }
-
-  // 3. MARK ATTENDANCE (Uploads to Cloud instantly)
-  Future<void> markAttendance(String id, String subject) async {
-    try {
-      // Fetch Name for the record
-      DocumentSnapshot studentDoc = await _firestore.collection('students').doc(id).get();
-      String name = studentDoc['name'] ?? 'Unknown';
-
-      await _firestore.collection('attendance').add({
-        'studentId': id,
-        'studentName': name,
-        'subject': subject,
-        'timestamp': FieldValue.serverTimestamp(), // Server Time
-        'date': DateTime.now().toString().split(' ')[0], // YYYY-MM-DD
-        'time': "${DateTime.now().hour}:${DateTime.now().minute}", // HH:MM
-        'status': 'Present'
-      });
-      print("✅ Logged to Firebase!");
-    } catch (e) {
-      print("Error marking attendance: $e");
-    }
-  }
-
-  // 4. GET LIVE HISTORY (Stream)
-  Stream<QuerySnapshot> getHistoryStream(String id) {
-    return _firestore
-        .collection('attendance')
-        .where('studentId', isEqualTo: id)
-        .orderBy('timestamp', descending: true)
-        .snapshots();
-  }
-}
 19/12/25, 1:08 pm - Anuj-Sidam: Koni video pan taku shkate mag taa
 19/12/25, 1:09 pm - Varad (ECE)(VNIT): Ho ho...tech ek last check karaycha ahe ki kasa tackle karaycha tyanna...
 19/12/25, 1:15 pm - Anuj-Sidam: https://chatgpt.com/share/6945028f-9860-8001-b6d5-ba82681af331
@@ -2993,94 +1699,6 @@ class DatabaseService {
 27/12/25, 1:46 pm - Anuj-Sidam: Maza
 27/12/25, 1:46 pm - Varad (ECE)(VNIT): Okay great..👍🏻👍🏻
 27/12/25, 1:46 pm - Anuj-Sidam: <Media omitted>
-27/12/25, 1:46 pm - Varad (ECE)(VNIT): // 🛡️ STRICTER PHYSICS TRAP (Balanced for Skin vs Screen)
-
-Future<bool> _isPhysicsTrapPassed(File ambientFile, File flashFile, Color flashColor) async {
-    try {
-      final ambientBytes = await ambientFile.readAsBytes();
-      final flashBytes = await flashFile.readAsBytes();
-      final ambientImg = img.decodeImage(ambientBytes);
-      final flashImg = img.decodeImage(flashBytes);
-
-      if (ambientImg == null || flashImg == null) return false;
-
-      int passedPixels = 0;
-      int totalPixels = 0;
-      int glarePixels = 0; 
-      
-      // Analyze Center Face (30% to 70%)
-      int startX = (ambientImg.width * 0.3).toInt();
-      int endX = (ambientImg.width * 0.7).toInt();
-      int startY = (ambientImg.height * 0.3).toInt();
-      int endY = (ambientImg.height * 0.7).toInt();
-
-      bool isRedFlash = flashColor == Colors.red;
-      bool isBlueGreenFlash = (flashColor == Colors.blue || flashColor == Colors.green);
-
-      for (int y = startY; y < endY; y += 10) {
-        for (int x = startX; x < endX; x += 10) {
-          final pA = ambientImg.getPixel(x, y);
-          final pF = flashImg.getPixel(x, y);
-
-          // Skip black pixels
-          if (pA.r < 20 && pA.g < 20 && pA.b < 20) continue;
-          totalPixels++;
-
-          double valARed = pA.r.toDouble();
-          double valAGreen = pA.g.toDouble();
-          
-          double valFRed = pF.r.toDouble();
-          double valFGreen = pF.g.toDouble();
-          double valFBlue = pF.b.toDouble();
-          
-          double valF = (isRedFlash ? valFRed : (flashColor == Colors.green ? valFGreen : valFBlue));
-          double valA = (isRedFlash ? valARed : (flashColor == Colors.green ? valAGreen : pA.b.toDouble()));
-          
-          // 1. GLARE CHECK: Changed 230 -> 235
-          // Allows natural skin shine (oil/sweat) but catches Glass Reflection (pure white)
-          if (isBlueGreenFlash && valF > 235) { 
-             glarePixels++; 
-             continue; 
-          }
-
-          bool passedPixel = false;
-          if (isRedFlash) {
-             double ratioAmbient = valARed / (valAGreen + 1); 
-             double ratioFlash = valFRed / (valFGreen + 1);
-             
-             // 2. RED CHECK: Changed 1.15 -> 1.08 (8%)
-             // Screens shift 0%. Real skin shifts 10%+. 
-             // 1.08 is safer for different skin tones while still blocking screens.
-             if (ratioFlash > ratioAmbient * 1.05) passedPixel = true;
-             
-          } else if (isBlueGreenFlash) {
-             // 3. ABSORPTION CHECK
-             double boost = valF - valA;
-             // Allow boost up to 55 (was 50) to account for pale skin reflecting more light
-             if (boost > 5 && boost < 30) passedPixel = true;
-          }
-          if (passedPixel) passedPixels++;
-        }
-      }
-
-      if (totalPixels == 0) return false;
-
-      double ratio = passedPixels / totalPixels;
-      double glareRatio = glarePixels / totalPixels;
-      
-      print("💡 TRAP DEBUG: Glare=$glareRatio, SkinPass=$ratio");
-
-      // Reject if > 1.5% is pure glare (Screen)
-      if (glareRatio > 0.025) return false; 
-      
-      // Reject if < 30% of pixels look like skin (was 40%)
-      //// Lowered to 0.15 to accommodate all skin tones and lighting conditions.
-      // Phone screens score < 0.05, so this is still safe
-      if (ratio < 0.15) return false;
-
-      return true; 
-    } catch (e) { return true; }
-  }
 27/12/25, 1:47 pm - Varad (ECE)(VNIT): ha code madhe thoda change ahe...updated code👆..in attendance_scanner.dart
 27/12/25, 1:47 pm - Varad (ECE)(VNIT): Okay..👍👍
 27/12/25, 1:47 pm - Anuj-Sidam: Bhai but don don app chaa kay karachaa apan
@@ -3089,8 +1707,6 @@ Future<bool> _isPhysicsTrapPassed(File ambientFile, File flashFile, Color flashC
 27/12/25, 1:48 pm - Varad (ECE)(VNIT): Mazya app che codes help kartil ka tula
 27/12/25, 1:48 pm - Varad (ECE)(VNIT): karan maza student side cha proper working ahe
 27/12/25, 1:48 pm - Anuj-Sidam: Apl app ch purn kru.... te side la thevu sadhya sathi... to code aplyapaiki kunalach nahiye mahiti so tyavr kaam krn waste of time wattoy mla
-
-
 ~Shri Ashish
 27/12/25, 1:49 pm - Varad (ECE)(VNIT): Okay....chalel np..
 27/12/25, 1:49 pm - Varad (ECE)(VNIT): But Face recognition ch thevava lagel aplyala
@@ -3134,13 +1750,6 @@ Future<bool> _isPhysicsTrapPassed(File ambientFile, File flashFile, Color flashC
 27/12/25, 6:54 pm - Varad (ECE)(VNIT): <Media omitted>
 27/12/25, 6:58 pm - Anuj-Sidam: Okk
 27/12/25, 6:58 pm - Varad (ECE)(VNIT): And login sathi
-27/12/25, 6:59 pm - Varad (ECE)(VNIT): College ID NO.
-
-College email ID
-
-Name : 
-
-Face verification
 27/12/25, 7:26 pm - Anuj-Sidam: Btw kai kaam karachas hota ek da list patav naa
 27/12/25, 8:27 pm - Varad (ECE)(VNIT): Ho...yaar..me tula maza application pathvto try karayla...mala vel nahi bhetat ahe sakali pasun..bacche ale ahet...
 
@@ -3400,8 +2009,6 @@ We have to move faster
 09/03/26, 10:05 pm - Varad (ECE)(VNIT): edusecure50825@gmail.com
 Omnamah@shivay5
 10/03/26, 2:20 pm - Varad (ECE)(VNIT): Yeto 15-20 min madhe
-10/03/26, 3:02 pm - Varad (ECE)(VNIT): Hshahshshzbsnshnsbsbsbzbzbzbzbzbsbzbzbz zbzxbbzbxbxhx x zbzbzbbzbzzbbzbxbxbxbxx bshshsbsbpassword: ecnadnettA@50825
-Shhssbsbhsbsbszbsnsnz znzbznzbz <This message was edited>
 10/03/26, 3:03 pm - Anuj-Sidam: https://www.hostinger.com/in?REFERRALCODE=SMVANUJSIYJJ
 11/03/26, 7:25 am - Anuj-Sidam: varadmodelmodelvarad112233varadmodelmodelvarad112233varadmodelmodelvarad112233varadmodelmodelvarad112233
 11/03/26, 7:28 am - Varad (ECE)(VNIT): We have to meet our hosting ger child and wife name  ecnadneetA at 5 august 2025
@@ -3424,240 +2031,6 @@ But iski jo file,jaha pe host ki hai , wo server unreachable hai
 14/03/26, 12:57 pm - Varad (ECE)(VNIT): <Media omitted>
 14/03/26, 12:58 pm - Varad (ECE)(VNIT): varadvrk007@gmail.com 
 ya var pathv access
-14/03/26, 7:44 pm - Varad (ECE)(VNIT): This message was deleted
-14/03/26, 7:44 pm - Varad (ECE)(VNIT): This message was deleted
-14/03/26, 7:44 pm - Varad (ECE)(VNIT): This message was deleted
-15/03/26, 10:49 pm - Varad (ECE)(VNIT): ```python
-import pandas as pd
-import numpy as np
-
-# Load the dataset
-df = pd.read_csv('datasetladele.csv')
-print(df.head())
-print(df.info())
-print("Label value counts:")
-print(df['label'].value_counts())
-print("\nFirst element of 'data' column (truncated):")
-print(df['data'].iloc[0][:500])
-
-
-
-```
-
-```text
-   Unnamed: 0  ID label                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 ...
-
-```
-
-```python
-import pandas as pd
-import re
-import numpy as np
-
-df = pd.read_csv('datasetladele.csv')
-
-# Let's inspect the exact string of the first row
-data_str = df['data'].iloc[0]
-
-# Try to extract all floats
-floats = re.findall(r'[-+]?\d*\.\d+[eE][-+]?\d+|[-+]?\d*\.\d+|[-+]?\d+', data_str)
-# filter out the shape values '1589'
-filtered_floats = [float(f) for f in floats if f != '1589']
-
-print(f"Number of floats extracted (excluding 1589): {len(filtered_floats)}")
-print(f"Is it a multiple of 1589? {len(filtered_floats) % 1589 == 0}")
-print(f"Multiple: {len(filtered_floats) / 1589}")
-
-
-
-```
-
-```text
-Number of floats extracted (excluding 1589): 1800
-Is it a multiple of 1589? False
-Multiple: 1.1327879169288861
-
-
-```
-
-```python
-import pandas as pd
-df = pd.read_csv('datasetladele.csv')
-print(df['data'].str.contains(r'\.\.\.').value_counts())
-
-
-
-```
-
-```text
-data
-True    140
-Name: count, dtype: int64
-
-
-```
-
-```python
-import pandas as pd
-
-# Load the dataset
-df = pd.read_csv('datasetladele.csv')
-
-# Reshuffle the dataset completely
-df_shuffled = df.sample(frac=1, random_state=42).reset_index(drop=True)
-
-# Save the reshuffled dataset to a new CSV file
-df_shuffled.to_csv('datasetladele_shuffled.csv', index=False)
-print("Data reshuffled and saved.")
-
-
-
-```
-
-```text
-Data reshuffled and saved.
-
-
-```
-
-```python
-df_shuffled = pd.read_csv('datasetladele_shuffled.csv')
-print(df_shuffled.head(3))
-
-
-```
-
-```text
-   Unnamed: 0   ID   label                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              ...
-
-```
-
-Keeping in mind your preference for very clear answers and bullet points, I have processed your dataset and prepared the necessary code for you.
-
-**Data Reshuffling Complete**
-
-* I have randomly reshuffled your entire dataset.
-* The newly randomized data has been saved and is now available to you as **`datasetladele_shuffled.csv`**.
-
-**Important Warning About Your Dataset**
-
-* **Truncated Data:** Upon inspecting your CSV file, I noticed that the `data` column contains string representations of Numpy arrays that were cut off during export (you will see `...` scattered throughout the text).
-* **Data Loss:** Because of this truncation, the actual numerical values of the images are permanently lost in this specific CSV. A neural network cannot read "..." to train a model.
-* **How to Fix It:** You will need to re-export your original image data. When doing so, do not save arrays as a single string column. Instead, flatten the arrays so that each of the 1589 values has its own dedicated column in the CSV (e.g., `feature_1`, `feature_2`, ..., `feature_1589`).
-
-**Neural Network Code**
-Here is the step-by-step TensorFlow/Keras code to classify between the `real` and `attack` images once your dataset formatting is fixed.
-
-```python
-import pandas as pd
-import numpy as np
-import tensorflow as tf
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Dropout
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import LabelEncoder
-
-# 1. Load the reshuffled dataset
-df = pd.read_csv('datasetladele_shuffled.csv')
-
-# --- IMPORTANT DATA FIX NEEDED ---
-# As mentioned, your 'data' column currently contains truncated strings.
-# Once you re-export your dataset so each feature is its own separate numerical column,
-# you can load your features (X) by dropping the non-feature columns like this:
-# X = df.drop(columns=['ID', 'label', 'Unnamed: 0']).values
-
-# For demonstration purposes, we will generate dummy data matching your expected shape 
-# (1589 features) so this code runs successfully:
-X = np.random.rand(len(df), 1589) 
-
-# 2. Extract and encode the labels (real = 0, attack = 1)
-label_encoder = LabelEncoder()
-y = label_encoder.fit_transform(df['label'])
-
-# 3. Split into training and testing sets (80% train, 20% test)
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
-# 4. Build the Neural Network
-model = Sequential([
-    # Input layer and first hidden layer
-    Dense(128, activation='relu', input_shape=(1589,)),
-    Dropout(0.3), # Dropout prevents overfitting
-    
-    # Second hidden layer
-    Dense(64, activation='relu'),
-    Dropout(0.3),
-    
-    # Output layer (Sigmoid is used for binary classification: 0 or 1)
-    Dense(1, activation='sigmoid') 
-])
-
-# 5. Compile the model
-model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
-
-# 6. Train the model
-print("Training the model...")
-history = model.fit(X_train, y_train, epochs=20, batch_size=32, validation_split=0.2)
-
-# 7. Evaluate on the test data
-print("\nEvaluating the model on test data...")
-loss, accuracy = model.evaluate(X_test, y_test)
-print(f"Test Accuracy: {accuracy * 100:.2f}%")
-
-```
-15/03/26, 10:49 pm - Varad (ECE)(VNIT): <Media omitted>
-15/03/26, 10:50 pm - Varad (ECE)(VNIT): import pandas as pd
-import numpy as np
-import tensorflow as tf
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Dropout
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import LabelEncoder
-
-# 1. Load the reshuffled dataset
-df = pd.read_csv('datasetladele_shuffled.csv')
-
-# --- IMPORTANT DATA FIX NEEDED ---
-# As mentioned, your 'data' column currently contains truncated strings.
-# Once you re-export your dataset so each feature is its own separate numerical column,
-# you can load your features (X) by dropping the non-feature columns like this:
-# X = df.drop(columns=['ID', 'label', 'Unnamed: 0']).values
-
-# For demonstration purposes, we will generate dummy data matching your expected shape 
-# (1589 features) so this code runs successfully:
-X = np.random.rand(len(df), 1589) 
-
-# 2. Extract and encode the labels (real = 0, attack = 1)
-label_encoder = LabelEncoder()
-y = label_encoder.fit_transform(df['label'])
-
-# 3. Split into training and testing sets (80% train, 20% test)
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
-# 4. Build the Neural Network
-model = Sequential([
-    # Input layer and first hidden layer
-    Dense(128, activation='relu', input_shape=(1589,)),
-    Dropout(0.3), # Dropout prevents overfitting
-    
-    # Second hidden layer
-    Dense(64, activation='relu'),
-    Dropout(0.3),
-    
-    # Output layer (Sigmoid is used for binary classification: 0 or 1)
-    Dense(1, activation='sigmoid') 
-])
-
-# 5. Compile the model
-model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
-
-# 6. Train the model
-print("Training the model...")
-history = model.fit(X_train, y_train, epochs=20, batch_size=32, validation_split=0.2)
-
-# 7. Evaluate on the test data
-print("\nEvaluating the model on test data...")
-loss, accuracy = model.evaluate(X_test, y_test)
-print(f"Test Accuracy: {accuracy * 100:.2f}%")
 17/03/26, 9:26 pm - Anuj-Sidam: mi jee zip file patvli ahe tyat jee dataset ahe tee tu google drive var upload karr naa
 17/03/26, 9:28 pm - Varad (ECE)(VNIT): Ok
 17/03/26, 9:58 pm - Varad (ECE)(VNIT): https://drive.google.com/drive/folders/1Y4soMUAjGcxgy4AI3tq2oxHM7RWcZSdE?usp=drive_link
@@ -3667,112 +2040,6 @@ print(f"Test Accuracy: {accuracy * 100:.2f}%")
 18/03/26, 10:18 am - Anuj-Sidam: <Media omitted>
 18/03/26, 10:18 am - Anuj-Sidam: <Media omitted>
 18/03/26, 10:18 am - Anuj-Sidam: <Media omitted>
-18/03/26, 10:19 am - Anuj-Sidam: import pandas as pd
-import numpy as np
-import tensorflow as tf
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Dropout, BatchNormalization
-from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import LabelEncoder, StandardScaler
-import joblib
-import re
-
-# 1. Load the dataset
-# Ensure the path matches the file provided
-
-df = pd.read_csv(path)
-
-def robust_parse_data(entry):
-    """
-    Extracts all numerical values from the messy string representation.
-    Handles 'array(...)', 'shape=(...)', newlines, and '...'.
-    """
-    # Remove metadata that isn't feature data
-    entry = re.sub(r"shape=\(\d+,\)", "", entry)
-    entry = re.sub(r"array\(", "", entry)
-    
-    # Remove structural characters and '...' truncation marker
-    for char in '[]() \n\t\r':
-        entry = entry.replace(char, ' ')
-    entry = entry.replace('...', ' ')
-    entry = entry.replace(',', ' ')
-    
-    # Find all floats and scientific notation numbers
-    numbers = re.findall(r"[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?", entry)
-    return [float(n) for n in numbers]
-
-print("Parsing dataset features...")
-all_features = [robust_parse_data(item) for item in df['data']]
-
-# Find the maximum feature length to pad all rows consistently
-max_len = max(len(f) for f in all_features)
-X = np.zeros((len(df), max_len))
-for i, f in enumerate(all_features):
-    X[i, :len(f)] = f
-
-# 2. Extract and encode the labels
-# Note: LabelEncoder will map 'attack' to 0 and 'real' to 1 by default (alphabetical)
-# We manually map to ensure 'real' = 0 and 'attack' = 1 as per your requirement
-label_map = {'real': 0, 'attack': 1}
-y = df['label'].map(label_map).values
-
-# 3. Preprocessing
-scaler = StandardScaler()
-X_scaled = scaler.fit_transform(X)
-
-# Split into training and testing sets
-X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42)
-
-# 4. Build the Neural Network
-# input_shape is now dynamic based on the parsed data length
-model = Sequential([
-    Dense(256, activation='relu', input_shape=(X_scaled.shape[1],)),
-    BatchNormalization(),
-    Dropout(0.4),
-    
-    Dense(128, activation='relu'),
-    BatchNormalization(),
-    Dropout(0.3),
-    
-    Dense(64, activation='relu'),
-    BatchNormalization(),
-    
-    Dense(1, activation='sigmoid') 
-])
-
-# 5. Advanced Callbacks
-callbacks = [
-    EarlyStopping(monitor='val_loss', patience=20, restore_best_weights=True),
-    ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=10, min_lr=1e-6)
-]
-
-# 6. Compile and Train
-model.compile(
-    optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
-    loss='binary_crossentropy',
-    metrics=['accuracy']
-)
-
-print(f"Training started on {X_scaled.shape[1]} features...")
-history = model.fit(
-    X_train, y_train,
-    epochs=20000, # Safeguarded by EarlyStopping
-    batch_size=32,
-    validation_split=0.1,
-    callbacks=callbacks,
-    verbose=1
-)
-
-# 7. Evaluate and Export
-loss, accuracy = model.evaluate(X_test, y_test)
-print(f"\nTest Accuracy: {accuracy * 100:.2f}%")
-
-# Save files for inference
-model.save("anti_spoofing_model.keras")
-joblib.dump(scaler, "scaler.pkl")
-joblib.dump(label_map, "label_map.pkl")
-print("Model, Scaler, and Label Map exported successfully.")
 18/03/26, 10:19 am - Anuj-Sidam: training code
 18/03/26, 10:23 am - Varad (ECE)(VNIT): Me kahi karu ka yacaha??
 18/03/26, 2:22 pm - Anuj-Sidam: Oat Samor lavli ahe
@@ -3786,10 +2053,6 @@ Bcz...ata complete kela tar .. director la dakhvata yeil and...Jar te convince z
 Tar pudhchya semester madhe implement hou shakel commercially
 18/03/26, 2:48 pm - Anuj-Sidam: Sorry bhai
 18/03/26, 5:18 pm - Anuj-Sidam: test karr broo 75~80 accuracy challi
-18/03/26, 6:29 pm - Anuj-Sidam: https://cvlab.cse.msu.edu/siw-spoof-in-the-wild-database.html broo haa datset download karr
-18/03/26, 7:57 pm - Anuj-Sidam: https://unidata.pro/datasets/anti-spoofing-replay-pc-videos/ haa pan
-18/03/26, 8:00 pm - Anuj-Sidam: https://sites.google.com/site/oulunpudatabase/download?authuser=0 haa pan
-18/03/26, 9:15 pm - Varad (ECE)(VNIT): Okay...karto
 18/03/26, 9:15 pm - Varad (ECE)(VNIT): Okay
 18/03/26, 10:37 pm - Varad (ECE)(VNIT): <Media omitted>
 18/03/26, 10:40 pm - Varad (ECE)(VNIT): abee hai paid ahe
@@ -3822,15 +2085,6 @@ Karan app madhe inference pan karaycha ahe..
 21/03/26, 6:47 pm - Varad (ECE)(VNIT): serengil/deepface
 21/03/26, 6:47 pm - Varad (ECE)(VNIT): yakhyo/uniface
 21/03/26, 6:48 pm - Varad (ECE)(VNIT): sakethbachu/Face-Liveness-Detection
-21/03/26, 6:49 pm - Varad (ECE)(VNIT): This model judges whether a face in front of the camera is real or fake — it classifies printed paper photos, electronic display screens, silicone masks, and 3D human images as false faces. It uses Fourier spectrum analysis combined with a CNN to detect real vs. fake faces in the frequency domain. GitHub
-It uses a combination of two models operating on two different scales of the same image, penalized for classification loss (cross-entropy) and the difference between the Fourier transform and intermediate CNN features. The models are available in PyTorch format and are also integrated into the popular DeepFace library. GitHub
-
-Why it's perfect for EduSecure: Passive/silent detection — no user action needed (no "blink" or "smile" prompts), so the 5–10 sec class-wide attendance window is achievable.
-Android APK version also open-sourced at minivision-ai/Silent-Face-Anti-Spoofing-APK
-License: Apache 2.0 ✅
-22/03/26, 6:06 pm - Varad (ECE)(VNIT): https://www.oracle.com/in/cloud/free/
-
-He ekda bagh bhai...Hostinger chya replacement madhe use karu shakto ka?
 23/03/26, 8:37 pm - Varad (ECE)(VNIT): 
 23/03/26, 8:38 pm - Anuj-Sidam: <Media omitted>
 23/03/26, 8:38 pm - Anuj-Sidam: Samarth laa mahit asnaar
@@ -3856,9 +2110,6 @@ He ekda bagh bhai...Hostinger chya replacement madhe use karu shakto ka?
 29/03/26, 10:55 am - Varad (ECE)(VNIT): Mazya kivha Tanmay chya laptop var karu
 29/03/26, 10:56 am - Anuj-Sidam: Fine by me, Samarth kadhun card reader ghaun thav os install karala lagnaar
 29/03/26, 10:56 am - Varad (ECE)(VNIT): Accha...Toh gavala gela ahe....Dusryakade baghto me..
-30/03/26, 8:03 pm - Anuj-Sidam: https://payments.google.com/gp/w/u/0/home/activitydetail?fgid=CKulBBI2UFVSQ0hBU0VfT1JERVJfRkdfMTBiMTAwNDEtYTZmMi00NDQ1LWEzNjMtMDE4MjZlYjM0OGY2&ec=AJ9oCCxBrh%2FPUak8HYaFIsK3h6yAFAd6CSy3KoS3x24Ee%2BYGlXW39tF0uWWXfRukQJqTOn9cPf05&sctid=4400072573428907
-30/03/26, 8:07 pm - Anuj-Sidam: <Media omitted>
-30/03/26, 8:07 pm - Anuj-Sidam: <Media omitted>
 31/03/26, 1:48 pm - Anuj-Sidam: Card Reader bag naa broo kuthe miltee taa
 31/03/26, 5:57 pm - Varad (ECE)(VNIT): Amazon parcel yeu shakel
 31/03/26, 5:57 pm - Varad (ECE)(VNIT): Mala ek Update de na ki atta paryant kay progress zali ...
@@ -3871,12 +2122,6 @@ Vagere vagera
 31/03/26, 11:34 pm - Anuj-Sidam: <Media omitted>
 01/04/26, 10:31 am - Varad (ECE)(VNIT): <Media omitted>
 01/04/26, 10:35 am - Varad (ECE)(VNIT): Mala aplya app cha tech stack sang na
-
-1) React native language 
-2) Expo framework 
-3).. Tailwind (for what)?
-
-4)..
 01/04/26, 10:37 am - Anuj-Sidam: Tailwind CSS for Styling
 01/04/26, 10:38 am - Varad (ECE)(VNIT): okay ajun?
 01/04/26, 10:38 am - Anuj-Sidam: Bas evda enough ahe vibe code sathi !?
@@ -3887,10 +2132,6 @@ Vagere vagera
 01/04/26, 3:38 pm - Anuj-Sidam: <Media omitted>
 01/04/26, 4:55 pm - Varad (ECE)(VNIT): 
 01/04/26, 5:24 pm - Varad (ECE)(VNIT): Issue sorted
-01/04/26, 8:17 pm - Anuj-Sidam: https://www.linkedin.com/posts/raj-vekariya-49147a357_ai-computervision-machinelearning-ugcPost-7444772521872285696-Sw4V?utm_source=share&utm_medium=member_android&rcm=ACoAAEfoLKUBDyyJ0pumRPWZe3xMDI5d6W1v-98
-01/04/26, 9:47 pm - Anuj-Sidam: FYP NOTES COMPARE KARU,,,,,
-01/04/26, 9:47 pm - Anuj-Sidam: https://www.notion.so/FYP-NOTES-3352555592448056aa6ce78a5c879ea7?source=copy_link
-01/04/26, 9:47 pm - Anuj-Sidam: <Media omitted>
 01/04/26, 10:03 pm - Varad (ECE)(VNIT): Mazya handwritten ahet🫠
 02/04/26, 11:04 am - Anuj-Sidam: <Media omitted>
 04/04/26, 6:42 pm - Varad (ECE)(VNIT): Pratyek file che first import code baghun gheshil ..1-2 file madhe add kele hote
@@ -3903,34 +2144,6 @@ Vagere vagera
 Viva honar fakt
 06/04/26, 4:17 pm - Anuj-Sidam: Zala kayy broo eval
 06/04/26, 4:33 pm - Varad (ECE)(VNIT): Signatures ghet ahe bill sathi
-07/04/26, 8:16 pm - Anuj-Sidam: if (photo) {
-        const formData = new FormData();
-        formData.append('file', {
-          uri : photo.uri,
-          name: "face.jpg",
-          type: 'image/jpeg',
-        } as any);
-        // Appending the enroll so the backend has a way to link the image to the student if needed.
-        formData.append('name', String(enroll));
-
-        const response = await fetch("https://nexalaya.tech/register", {
-  method: "POST",
-  body: formData,
-});
-        console.log("Face Registration API Response:", await response.json());
-      }
-
-      if (response.status === 200 || response.status === 201) {
-        console.log("User successfully registered");
-        router.replace("/page1");
-      }
-    } catch (err: any) {
-      console.log("Error:", err.message);
-    } finally {
-      setIsCapturing(false);
-    }
-
-  }
 08/04/26, 8:30 am - Anuj-Sidam: Ani key return chaa kasa astee
 08/04/26, 8:31 am - Varad (ECE)(VNIT): Return karun de guard desk var...
 And sign kar parat register var
@@ -4038,14 +2251,6 @@ Tar sadhya account section la jat ahe
 21/04/26, 2:39 pm - Anuj-Sidam: <Media omitted>
 21/04/26, 2:39 pm - Anuj-Sidam: his csv Research wala RPI madhe tak
 21/04/26, 2:44 pm - Varad (ECE)(VNIT): Okay
-23/04/26, 1:32 am - Varad (ECE)(VNIT): 1️⃣ Setup & Data Loading
-Launch GUI and select dataset → Load EEG signals (32 channels) and labels.
-
-2️⃣ Preprocessing & Segmentation
-Remove NaN values, normalize data → Split into 5-sec windows and convert to epochs.
-
-3️⃣ Classification & Output
-Apply KNN model → Predict (LIGHT / PAIN) → Display results with graph and comparison in GUI.
 23/04/26, 2:07 am - Anuj-Sidam: <Media omitted>
 23/04/26, 2:16 am - Anuj-Sidam: <Media omitted>
 23/04/26, 8:29 am - Anuj-Sidam: Kiti laa jai chaa ahe ?
@@ -4262,282 +2467,6 @@ New user la 0/0 dakhvayla pahije....
 Why we are not doing from Bluetooth of Mobile...just we have to detect that Mobile is in range or not ? (Power ..-dbm)
 14/05/26, 7:23 pm - Anuj-Sidam: <Media omitted>
 14/05/26, 9:03 pm - Anuj-Sidam: Meet postponed zali ahe boli skato apan
-14/05/26, 9:39 pm - Anuj-Sidam: }
-111 - Session   |  ECL443  |  Initating attendance session
-cached coude :  ECL443
-111 - Session   |  1212  |  Initial False entry has been added to id
-111 - Session   |  12123  |  Initial False entry has been added to id
-111 - Session   |  1234  |  Initial False entry has been added to id
-111 - Session   |  12344  |  Initial False entry has been added to id
-111 - Session   |  12345  |  Initial False entry has been added to id
-111 - Session   |  123456  |  Initial False entry has been added to id
-111 - Session   |  123456123456  |  Initial False entry has been added to id
-111 - Session   |  123456789  |  Initial False entry has been added to id
-111 - Session   |  123457893  |  Initial False entry has been added to id
-111 - Session   |  1236  |  Initial False entry has been added to id
-111 - Session   |  12366  |  Initial False entry has been added to id
-111 - Session   |  123685  |  Initial False entry has been added to id
-111 - Session   |  1313  |  Initial False entry has been added to id
-111 - Session   |  15199  |  Initial False entry has been added to id
-111 - Session   |  21001  |  Initial False entry has been added to id
-111 - Session   |  21345678944  |  Initial False entry has been added to id
-111 - Session   |  2134576  |  Initial False entry has been added to id
-111 - Session   |  23145  |  Initial False entry has been added to id
-111 - Session   |  23156  |  Initial False entry has been added to id
-111 - Session   |  23236  |  Initial False entry has been added to id
-111 - Session   |  23564  |  Initial False entry has been added to id
-111 - Session   |  25252  |  Initial False entry has been added to id
-111 - Session   |  2580  |  Initial False entry has been added to id
-111 - Session   |  2626  |  Initial False entry has been added to id
-111 - Session   |  262626  |  Initial False entry has been added to id
-111 - Session   |  26452  |  Initial False entry has been added to id
-111 - Session   |  2957  |  Initial False entry has been added to id
-111 - Session   |  29613  |  Initial False entry has been added to id
-111 - Session   |  29616  |  Initial False entry has been added to id
-111 - Session   |  29623  |  Initial False entry has been added to id
-111 - Session   |  29628  |  Initial False entry has been added to id
-111 - Session   |  29639  |  Initial False entry has been added to id
-111 - Session   |  29640  |  Initial False entry has been added to id
-111 - Session   |  29752  |  Initial False entry has been added to id
-111 - Session   |  29818  |  Initial False entry has been added to id
-111 - Session   |  29875  |  Initial False entry has been added to id
-111 - Session   |  29909  |  Initial False entry has been added to id
-111 - Session   |  2996  |  Initial False entry has been added to id
-111 - Session   |  30276  |  Initial False entry has been added to id
-111 - Session   |  32154  |  Initial False entry has been added to id
-111 - Session   |  321654  |  Initial False entry has been added to id
-111 - Session   |  33569  |  Initial False entry has been added to id
-111 - Session   |  3469481  |  Initial False entry has been added to id
-111 - Session   |  36369  |  Initial False entry has been added to id
-111 - Session   |  3658  |  Initial False entry has been added to id
-111 - Session   |  369369  |  Initial False entry has been added to id
-111 - Session   |  45234  |  Initial False entry has been added to id
-111 - Session   |  45236  |  Initial False entry has been added to id
-111 - Session   |  54648484  |  Initial False entry has been added to id
-111 - Session   |  54648848  |  Initial False entry has been added to id
-111 - Session   |  5656  |  Initial False entry has been added to id
-111 - Session   |  57648401  |  Initial False entry has been added to id
-111 - Session   |  6321  |  Initial False entry has been added to id
-111 - Session   |  63245  |  Initial False entry has been added to id
-111 - Session   |  6619  |  Initial False entry has been added to id
-111 - Session   |  666666  |  Initial False entry has been added to id
-111 - Session   |  6936  |  Initial False entry has been added to id
-111 - Session   |  6939  |  Initial False entry has been added to id
-111 - Session   |  6953  |  Initial False entry has been added to id
-111 - Session   |  6969  |  Initial False entry has been added to id
-111 - Session   |  696969  |  Initial False entry has been added to id
-111 - Session   |  70000  |  Initial False entry has been added to id
-111 - Session   |  8000  |  Initial False entry has been added to id
-111 - Session   |  846104  |  Initial False entry has been added to id
-111 - Session   |  85231  |  Initial False entry has been added to id
-111 - Session   |  98090  |  Initial False entry has been added to id
-[
-  '1212',      '12123',    '1234',         '12344',
-  '12345',     '123456',   '123456123456', '123456789',
-  '123457893', '1236',     '12366',        '123685',
-  '1313',      '15199',    '21001',        '21345678944',
-  '2134576',   '23145',    '23156',        '23236',
-  '23564',     '25252',    '2580',         '2626',
-  '262626',    '26452',    '2957',         '29613',
-  '29616',     '29623',    '29628',        '29639',
-  '29640',     '29752',    '29818',        '29875',
-  '29909',     '2996',     '30276',        '32154',
-  '321654',    '33569',    '3469481',      '36369',
-  '3658',      '369369',   '45234',        '45236',
-  '54648484',  '54648848', '5656',         '57648401',
-  '6321',      '63245',    '6619',         '666666',
-  '6936',      '6939',     '6953',         '6969',
-  '696969',    '70000',    '8000',         '846104',
-  '85231',     '98090'
-]
-Attendance started: Cached students list: [
-  '1212',      '12123',    '1234',         '12344',
-  '12345',     '123456',   '123456123456', '123456789',
-  '123457893', '1236',     '12366',        '123685',
-  '1313',      '15199',    '21001',        '21345678944',
-  '2134576',   '23145',    '23156',        '23236',
-  '23564',     '25252',    '2580',         '2626',
-  '262626',    '26452',    '2957',         '29613',
-  '29616',     '29623',    '29628',        '29639',
-  '29640',     '29752',    '29818',        '29875',
-  '29909',     '2996',     '30276',        '32154',
-  '321654',    '33569',    '3469481',      '36369',
-  '3658',      '369369',   '45234',        '45236',
-  '54648484',  '54648848', '5656',         '57648401',
-  '6321',      '63245',    '6619',         '666666',
-  '6936',      '6939',     '6953',         '6969',
-  '696969',    '70000',    '8000',         '846104',
-  '85231',     '98090'
-]
-111 - Session   |  ECL443  |  Initating attendance session
-cached coude :  ECL443
-111 - Session   |  1212  |  Initial False entry has been added to id
-111 - Session   |  12123  |  Initial False entry has been added to id
-111 - Session   |  1234  |  Initial False entry has been added to id
-111 - Session   |  12344  |  Initial False entry has been added to id
-111 - Session   |  12345  |  Initial False entry has been added to id
-111 - Session   |  123456  |  Initial False entry has been added to id
-111 - Session   |  123456123456  |  Initial False entry has been added to id
-111 - Session   |  123456789  |  Initial False entry has been added to id
-111 - Session   |  123457893  |  Initial False entry has been added to id
-111 - Session   |  1236  |  Initial False entry has been added to id
-111 - Session   |  12366  |  Initial False entry has been added to id
-111 - Session   |  123685  |  Initial False entry has been added to id
-111 - Session   |  1313  |  Initial False entry has been added to id
-111 - Session   |  15199  |  Initial False entry has been added to id
-111 - Session   |  21001  |  Initial False entry has been added to id
-111 - Session   |  21345678944  |  Initial False entry has been added to id
-111 - Session   |  2134576  |  Initial False entry has been added to id
-111 - Session   |  23145  |  Initial False entry has been added to id
-111 - Session   |  23156  |  Initial False entry has been added to id
-111 - Session   |  23236  |  Initial False entry has been added to id
-111 - Session   |  23564  |  Initial False entry has been added to id
-111 - Session   |  25252  |  Initial False entry has been added to id
-111 - Session   |  2580  |  Initial False entry has been added to id
-111 - Session   |  2626  |  Initial False entry has been added to id
-111 - Session   |  262626  |  Initial False entry has been added to id
-111 - Session   |  26452  |  Initial False entry has been added to id
-111 - Session   |  2957  |  Initial False entry has been added to id
-111 - Session   |  29613  |  Initial False entry has been added to id
-111 - Session   |  29616  |  Initial False entry has been added to id
-111 - Session   |  29623  |  Initial False entry has been added to id
-111 - Session   |  29628  |  Initial False entry has been added to id
-111 - Session   |  29639  |  Initial False entry has been added to id
-111 - Session   |  29640  |  Initial False entry has been added to id
-111 - Session   |  29752  |  Initial False entry has been added to id
-111 - Session   |  29818  |  Initial False entry has been added to id
-111 - Session   |  29875  |  Initial False entry has been added to id
-111 - Session   |  29909  |  Initial False entry has been added to id
-111 - Session   |  2996  |  Initial False entry has been added to id
-111 - Session   |  30276  |  Initial False entry has been added to id
-111 - Session   |  32154  |  Initial False entry has been added to id
-111 - Session   |  321654  |  Initial False entry has been added to id
-111 - Session   |  33569  |  Initial False entry has been added to id
-111 - Session   |  3469481  |  Initial False entry has been added to id
-111 - Session   |  36369  |  Initial False entry has been added to id
-111 - Session   |  3658  |  Initial False entry has been added to id
-111 - Session   |  369369  |  Initial False entry has been added to id
-111 - Session   |  45234  |  Initial False entry has been added to id
-111 - Session   |  45236  |  Initial False entry has been added to id
-111 - Session   |  54648484  |  Initial False entry has been added to id
-111 - Session   |  54648848  |  Initial False entry has been added to id
-111 - Session   |  5656  |  Initial False entry has been added to id
-111 - Session   |  57648401  |  Initial False entry has been added to id
-111 - Session   |  6321  |  Initial False entry has been added to id
-111 - Session   |  63245  |  Initial False entry has been added to id
-111 - Session   |  6619  |  Initial False entry has been added to id
-111 - Session   |  666666  |  Initial False entry has been added to id
-111 - Session   |  6936  |  Initial False entry has been added to id
-111 - Session   |  6939  |  Initial False entry has been added to id
-111 - Session   |  6953  |  Initial False entry has been added to id
-111 - Session   |  6969  |  Initial False entry has been added to id
-111 - Session   |  696969  |  Initial False entry has been added to id
-111 - Session   |  70000  |  Initial False entry has been added to id
-111 - Session   |  8000  |  Initial False entry has been added to id
-111 - Session   |  846104  |  Initial False entry has been added to id
-111 - Session   |  85231  |  Initial False entry has been added to id
-111 - Session   |  98090  |  Initial False entry has been added to id
-[
-  '1212',      '12123',    '1234',         '12344',
-  '12345',     '123456',   '123456123456', '123456789',
-  '123457893', '1236',     '12366',        '123685',
-  '1313',      '15199',    '21001',        '21345678944',
-  '2134576',   '23145',    '23156',        '23236',
-  '23564',     '25252',    '2580',         '2626',
-  '262626',    '26452',    '2957',         '29613',
-  '29616',     '29623',    '29628',        '29639',
-  '29640',     '29752',    '29818',        '29875',
-  '29909',     '2996',     '30276',        '32154',
-  '321654',    '33569',    '3469481',      '36369',
-  '3658',      '369369',   '45234',        '45236',
-  '54648484',  '54648848', '5656',         '57648401',
-  '6321',      '63245',    '6619',         '666666',
-  '6936',      '6939',     '6953',         '6969',
-  '696969',    '70000',    '8000',         '846104',
-  '85231',     '98090'
-]
-Attendance started: Cached students list: [
-  '1212',      '12123',    '1234',         '12344',
-  '12345',     '123456',   '123456123456', '123456789',
-  '123457893', '1236',     '12366',        '123685',
-  '1313',      '15199',    '21001',        '21345678944',
-  '2134576',   '23145',    '23156',        '23236',
-  '23564',     '25252',    '2580',         '2626',
-  '262626',    '26452',    '2957',         '29613',
-  '29616',     '29623',    '29628',        '29639',
-  '29640',     '29752',    '29818',        '29875',
-  '29909',     '2996',     '30276',        '32154',
-  '321654',    '33569',    '3469481',      '36369',
-  '3658',      '369369',   '45234',        '45236',
-  '54648484',  '54648848', '5656',         '57648401',
-  '6321',      '63245',    '6619',         '666666',
-  '6936',      '6939',     '6953',         '6969',
-  '696969',    '70000',    '8000',         '846104',
-  '85231',     '98090'
-]
-111 - Summary  |  eyJhbGciOiJSUzI1NiIsImtpZCI6Ijg2OGU0YWNlMGI2NTE2ZDM2YjlmNTZkZThjZTQ5Nzg4ZmNjZGFjNDMiLCJ0eXAiOiJKV1QifQ.eyJuYW1lIjoiSEFSSVNIIiwicm9sZSI6InN0dWRlbnQiLCJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vYXQtcHJvLTE4MjA5IiwiYXVkIjoiYXQtcHJvLTE4MjA5IiwiYXV0aF90aW1lIjoxNzc4NzUwODU2LCJ1c2VyX2lkIjoiUnRSOWdEUklyeFpJUVhoT242THhuNkJMRXYwMiIsInN1YiI6IlJ0UjlnRFJJcnhaSVFYaE9uNkx4bjZCTEV2MDIiLCJpYXQiOjE3Nzg3NTA4NTYsImV4cCI6MTc3ODc1NDQ1NiwiZW1haWwiOiJoaGhAZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOmZhbHNlLCJmaXJlYmFzZSI6eyJpZGVudGl0aWVzIjp7ImVtYWlsIjpbImhoaEBnbWFpbC5jb20iXX0sInNpZ25faW5fcHJvdmlkZXIiOiJwYXNzd29yZCJ9fQ.F4lSN1lCBj4paDwiPkVBVkooVGpUMHH1Az8SL16su7hxeeI_WYlPZ4_2rWnXJBIbeg5l1WuQBY1Q53lJX9c7B5ktuQTWpI0JcbG_nJOdfBsVCFztDXZhKeHj2XUMc9ASAXim51TfclPlYmrI9WOFMbHYPuZaHLcL6HY5GdGQUdLPMjrqUIxgUYUggj8fOoom3ts511Lw2snobdUDHhJP_9dwjDU2ZduEiBDuUvHnEGWAWMzT5xgC6vot6BBAliXpvVxWCXVXdjYTUbqg-bEhp0klv3uEzM6vcJHgW64T12QK3FtB7CunFSw_-WheUqa3TgfjP4cf3hZ3cTvlkz3nAA  |  token found in req body
-111 - Summary  |  RtR9gDRIrxZIQXhOn6Lxn6BLEv02  |  decoded userId
-111 - Summary  |  Student Details are found
-111 - Summary  |  Fetching has been initated
-Summary generated for user RtR9gDRIrxZIQXhOn6Lxn6BLEv02 with enroll 29639 across 3 courses
-[
-  '1212',      '12123',    '1234',         '12344',
-  '12345',     '123456',   '123456123456', '123456789',
-  '123457893', '1236',     '12366',        '123685',
-  '1313',      '15199',    '21001',        '21345678944',
-  '2134576',   '23145',    '23156',        '23236',
-  '23564',     '25252',    '2580',         '2626',
-  '262626',    '26452',    '2957',         '29613',
-  '29616',     '29623',    '29628',        '29639',
-  '29640',     '29752',    '29818',        '29875',
-  '29909',     '2996',     '30276',        '32154',
-  '321654',    '33569',    '3469481',      '36369',
-  '3658',      '369369',   '45234',        '45236',
-  '54648484',  '54648848', '5656',         '57648401',
-  '6321',      '63245',    '6619',         '666666',
-  '6936',      '6939',     '6953',         '6969',
-  '696969',    '70000',    '8000',         '846104',
-  '85231',     '98090'
-]
-ECL443
-111 - Session   |  29639  |  Has been found in cache allowing camera access
-Found Token
-recived the token 29639
-111 - Summary  |  eyJhbGciOiJSUzI1NiIsImtpZCI6Ijg2OGU0YWNlMGI2NTE2ZDM2YjlmNTZkZThjZTQ5Nzg4ZmNjZGFjNDMiLCJ0eXAiOiJKV1QifQ.eyJuYW1lIjoiSEFSSVNIIiwicm9sZSI6InN0dWRlbnQiLCJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vYXQtcHJvLTE4MjA5IiwiYXVkIjoiYXQtcHJvLTE4MjA5IiwiYXV0aF90aW1lIjoxNzc4NzUwODU2LCJ1c2VyX2lkIjoiUnRSOWdEUklyeFpJUVhoT242THhuNkJMRXYwMiIsInN1YiI6IlJ0UjlnRFJJcnhaSVFYaE9uNkx4bjZCTEV2MDIiLCJpYXQiOjE3Nzg3NTA4NTYsImV4cCI6MTc3ODc1NDQ1NiwiZW1haWwiOiJoaGhAZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOmZhbHNlLCJmaXJlYmFzZSI6eyJpZGVudGl0aWVzIjp7ImVtYWlsIjpbImhoaEBnbWFpbC5jb20iXX0sInNpZ25faW5fcHJvdmlkZXIiOiJwYXNzd29yZCJ9fQ.F4lSN1lCBj4paDwiPkVBVkooVGpUMHH1Az8SL16su7hxeeI_WYlPZ4_2rWnXJBIbeg5l1WuQBY1Q53lJX9c7B5ktuQTWpI0JcbG_nJOdfBsVCFztDXZhKeHj2XUMc9ASAXim51TfclPlYmrI9WOFMbHYPuZaHLcL6HY5GdGQUdLPMjrqUIxgUYUggj8fOoom3ts511Lw2snobdUDHhJP_9dwjDU2ZduEiBDuUvHnEGWAWMzT5xgC6vot6BBAliXpvVxWCXVXdjYTUbqg-bEhp0klv3uEzM6vcJHgW64T12QK3FtB7CunFSw_-WheUqa3TgfjP4cf3hZ3cTvlkz3nAA  |  token found in req body
-111 - Summary  |  RtR9gDRIrxZIQXhOn6Lxn6BLEv02  |  decoded userId
-111 - Summary  |  Student Details are found
-111 - Summary  |  Fetching has been initated
-Summary generated for user RtR9gDRIrxZIQXhOn6Lxn6BLEv02 with enroll 29639 across 3 courses
-[
-  '1212',      '12123',    '1234',         '12344',
-  '12345',     '123456',   '123456123456', '123456789',
-  '123457893', '1236',     '12366',        '123685',
-  '1313',      '15199',    '21001',        '21345678944',
-  '2134576',   '23145',    '23156',        '23236',
-  '23564',     '25252',    '2580',         '2626',
-  '262626',    '26452',    '2957',         '29613',
-  '29616',     '29623',    '29628',        '29639',
-  '29640',     '29752',    '29818',        '29875',
-  '29909',     '2996',     '30276',        '32154',
-  '321654',    '33569',    '3469481',      '36369',
-  '3658',      '369369',   '45234',        '45236',
-  '54648484',  '54648848', '5656',         '57648401',
-  '6321',      '63245',    '6619',         '666666',
-  '6936',      '6939',     '6953',         '6969',
-  '696969',    '70000',    '8000',         '846104',
-  '85231',     '98090'
-]
-ECL443
-111 - Session   |  29639  |  Has been found in cache allowing camera access
-Found Token
-recived the token 29639
-111 - Summary  |  eyJhbGciOiJSUzI1NiIsImtpZCI6Ijg2OGU0YWNlMGI2NTE2ZDM2YjlmNTZkZThjZTQ5Nzg4ZmNjZGFjNDMiLCJ0eXAiOiJKV1QifQ.eyJuYW1lIjoiSEFSSVNIIiwicm9sZSI6InN0dWRlbnQiLCJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vYXQtcHJvLTE4MjA5IiwiYXVkIjoiYXQtcHJvLTE4MjA5IiwiYXV0aF90aW1lIjoxNzc4NzUwODU2LCJ1c2VyX2lkIjoiUnRSOWdEUklyeFpJUVhoT242THhuNkJMRXYwMiIsInN1YiI6IlJ0UjlnRFJJcnhaSVFYaE9uNkx4bjZCTEV2MDIiLCJpYXQiOjE3Nzg3NTA4NTYsImV4cCI6MTc3ODc1NDQ1NiwiZW1haWwiOiJoaGhAZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOmZhbHNlLCJmaXJlYmFzZSI6eyJpZGVudGl0aWVzIjp7ImVtYWlsIjpbImhoaEBnbWFpbC5jb20iXX0sInNpZ25faW5fcHJvdmlkZXIiOiJwYXNzd29yZCJ9fQ.F4lSN1lCBj4paDwiPkVBVkooVGpUMHH1Az8SL16su7hxeeI_WYlPZ4_2rWnXJBIbeg5l1WuQBY1Q53lJX9c7B5ktuQTWpI0JcbG_nJOdfBsVCFztDXZhKeHj2XUMc9ASAXim51TfclPlYmrI9WOFMbHYPuZaHLcL6HY5GdGQUdLPMjrqUIxgUYUggj8fOoom3ts511Lw2snobdUDHhJP_9dwjDU2ZduEiBDuUvHnEGWAWMzT5xgC6vot6BBAliXpvVxWCXVXdjYTUbqg-bEhp0klv3uEzM6vcJHgW64T12QK3FtB7CunFSw_-WheUqa3TgfjP4cf3hZ3cTvlkz3nAA  |  token found in req body
-111 - Summary  |  RtR9gDRIrxZIQXhOn6Lxn6BLEv02  |  decoded userId
-111 - Summary  |  Student Details are found
-111 - Summary  |  Fetching has been initated
-Summary generated for user RtR9gDRIrxZIQXhOn6Lxn6BLEv02 with enroll 29639 across 3 courses
-Cache cleared for students list after 10 minutes
-Cache cleared for students list after 10 minutes
 15/05/26, 9:35 am - Anuj-Sidam: Bro we should start our email i guess tee free milat hota edusecure account war
 15/05/26, 10:04 am - Varad (ECE)(VNIT): Yes..Karu tar shakto..But sadhya Gheun karnar kay ahe...Karan me ajun linkedin var evdha awareness create nahi kela publicity...
 
@@ -4609,8 +2538,6 @@ Asa karu shakto na...ki Pahilya Saglya fields check hotil and te confirm zalyava
 15/05/26, 10:33 am - Anuj-Sidam: may bee email similarly, by encoding the email in come kind of number like 23016 for bt23ece016, doable tar ahe vaataa
 15/05/26, 10:35 am - Varad (ECE)(VNIT): Haa yess ..karu shakto👍🏻
 15/05/26, 12:15 pm - Varad (ECE)(VNIT): Aplya model baddal thode doubts ahet
-
-What language/framework? Python (TensorFlow/PyTorch/ONNX)?
 How does it take input? Image file? Base64 string? NumPy array?
 What does it output? A 128/512-dim embedding? A boolean?
 15/05/26, 12:15 pm - Varad (ECE)(VNIT): face recognition and face anti spoofing
@@ -4832,26 +2759,6 @@ Me kela ahe message tyala personally pan ..but reply nahi ala
 30/05/26, 10:50 pm - Anuj-Sidam: Okk CICD nantar karto
 30/05/26, 10:51 pm - Varad (ECE)(VNIT): And also...
 30/05/26, 10:51 pm - Varad (ECE)(VNIT): Thamb me group var pin karto
-30/05/26, 10:51 pm - Varad (ECE)(VNIT): Now remaining improvements in System :
-
-*Antispoofing model integration in app*
-
-1) *Main attendance flow* should be properly working...for that if needed
-.....have to improve more in
-      *Backend* 
-Or *Database schema* 
-Whatever you suggest..
-
-2) *View attendance analytics* option in Professor Dashboard with *Real time attendance*
-
-3) *Security checkpoints* of the system 
-
-4) *Student and Professor* registration updation
-
-5) *UI/UX* improvements if needed
-30/05/26, 10:52 pm - Varad (ECE)(VNIT): Kahi tasks asel tar Aditya la distribute kar
-
-Because Ashish cha fix nahi ata ..to summer term karen Bahutek
 30/05/26, 10:53 pm - Varad (ECE)(VNIT): Me tyala vicharla ahe summer term cha kasa karnar ahes
 30/05/26, 10:54 pm - Varad (ECE)(VNIT): Btw he zala nahi ka..
 30/05/26, 10:54 pm - Varad (ECE)(VNIT): Karan tu grp var sangitla ki zala cicd
@@ -5342,75 +3249,6 @@ Bcz navin app chya db madhe store kasa Hoel te mag?
 23/06/26, 8:39 am - Anuj-Sidam: Model kade db chaa access ahe, basically ek server ahe jeva face yete Tyacha kade too, embedding kahadto, mag Tyacha kade db chaa access ahe already taa directly db madhe stire karto..
 23/06/26, 8:39 am - Varad (ECE)(VNIT): Accha got it
 23/06/26, 8:40 am - Varad (ECE)(VNIT): So eka model kade 2 db cha access asu shakto na
-23/06/26, 8:40 am - Varad (ECE)(VNIT): import e from 'express';
-import { db } from '../db/firebase'; // Adjust the path to your database connection
-import {
-  Firestore,
-  FieldValue,VectorQuery,
-  VectorQuerySnapshot
-} from "@google-cloud/firestore";
-
-export const embeddingsRouter = require('express').Router();
-embeddingsRouter.post('/add', async (req: any, res: any) => {
-  console.log("111 - faceAdd "," || ","Inited the face addition procedure ")
-  const { embedding, schoolId, studentId } = req.body;
-
-  try {
-    await addVectorEmbedding(embedding, schoolId, studentId);
-    res.status(200).json({ message: 'Vector embedding added successfully' });
-  } catch (error) {
-    console.error('Error adding vector embedding:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-embeddingsRouter.post('/search', async (req: any, res: any) => {
-  const { embedding, schoolId } = req.body;
-  console.log("111 - FaceSearch "," | ", schoolId , " | "," Searching for in student database ")
-  
-  try {
-    const results = await performVectorSearch(embedding, schoolId);
-    console.log("111 - FaceSerach "," | ", schoolId , " | "," Student has been found makring attendece ")
-    res.status(200).json({ results });
-  } catch (error) {
-    console.error('Error performing vector search:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-
-
-
-
-
-
-
-
-
-
-async function addVectorEmbedding(embedding: number[],schoolId: string,studentId: string) {
-const docRef = db.collection('Colleges').doc(schoolId).collection('documents').doc(studentId);
-await docRef.set({
-  embedding_field: FieldValue.vector(embedding)
-},{ merge: true });
-console.log('Vector embedding added successfully');}
-
-async function performVectorSearch(embedding: number[],schoolId: string) {
-
-// Requires a single-field vector index
-
-const collectionRef = db.collection('colleges').doc(schoolId).collection('documents');
-const vectorQuery: VectorQuery = collectionRef.findNearest({
-  vectorField: 'embedding_field',
-  queryVector: embedding,
-  limit: 1,
-  distanceMeasure: 'EUCLIDEAN'
-});
-
-const vectorQuerySnapshot: VectorQuerySnapshot = await vectorQuery.get();
-return vectorQuerySnapshot.docs}
-
-export { performVectorSearch, addVectorEmbedding };
 23/06/26, 8:41 am - Varad (ECE)(VNIT): Ha code sapadla mala aplya backend repo madhe -> embeddings
 23/06/26, 8:46 am - Anuj-Sidam: Kaa karacha ahe bhai 2 db ?
 23/06/26, 8:46 am - Varad (ECE)(VNIT): 2 apps ahet na ek with device wala and without device wala

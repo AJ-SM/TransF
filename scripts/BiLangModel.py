@@ -5,15 +5,21 @@ from scripts import tocknizer
 
 
 class BiLangModel(nn.Module):
-    def __init__(self,t,n_embbed):
+    def __init__(self,t,n_embbed,block_size=32):
         super().__init__()
+        # print("Test Forwarrd 2 ", t )
+        self.block_size = block_size
         self.token_embd_table = nn.Embedding(t,n_embbed)
-        self.postion_embd_table = nn.Embedding(t,n_embbed)
+        # print("Test Size ",self.token_embd_table.__sizeof__())
+        self.postion_embd_table = nn.Embedding(block_size,n_embbed)
         self.llm_head = nn.Linear(n_embbed,t)
 
     def forward(self, idx, targets=None):
+        _,T = idx.shape
+        # print("Test size" , T)
         token_embeddings = self.token_embd_table(idx)
-        logits = self.llm_head(token_embeddings)
+        x = token_embeddings + self.postion_embd_table(torch.arange(T))
+        logits = self.llm_head(x)
 
 
         if targets is None:
@@ -21,6 +27,7 @@ class BiLangModel(nn.Module):
         else:
 
             B, T, C = logits.shape
+            # print("B T C ",B,T,C)
             logits = logits.view(B * T, C)
             targets = targets.view(B * T)
             loss = F.cross_entropy(logits, targets)
@@ -28,7 +35,9 @@ class BiLangModel(nn.Module):
 
     def generate(self,idx, max_tocken_len = 100):
         for i in range(max_tocken_len):
-            logits, loss = self.forward(idx)
+
+            idx_cond = idx[:, -self.block_size:]
+            logits, loss = self.forward(idx_cond)
             logits = logits[:,-1]
             probs = F.softmax(logits, dim=-1)
             idx_next = torch.multinomial(probs, 1)
@@ -55,4 +64,4 @@ def trainer(model,dataset, epoch, context_size=8):
             steps += 1
         print(f"epoch {e}: avg loss {total_loss / steps:.4f}")
 
-    torch.save(model.state_dict(),".model/BiLangModel.pth")
+    # torch.save(model.state_dict(),".model/BiLangModel.pth")
