@@ -4,11 +4,26 @@ from torch.nn import functional as F
 from scripts import tocknizer
 
 class HEAD(nn.Module):
-    def __init__(self,headSize,n_embbed):
+    def __init__(self,headSize,n_embbed,block_size):
         super().__init__()
         self.key = nn.Linear(n_embbed,headSize,bias=False)
         self.value = nn.Linear(n_embbed,headSize,bias=False)
         self.query = nn.Linear(n_embbed,headSize,bias=False)
+        self.register_buffer('tril',torch.tril(torch.ones(block_size,block_size)))
+        # self.dropout = nn.Dropout(dropout)
+    def forward(self,x):
+        B,T,C = x.shape
+        k = self.key(x)
+        q= self.query(x)
+        wei = q @ k.transpose(-2, -1) * k.shape[-1] ** -0.5  # (B, T, hs) @ (B, hs, T) -> (B, T, T)
+        wei = wei.masked_fill(self.tril[:T, :T] == 0, float('-inf'))  # (B, T, T)
+        wei = F.softmax(wei, dim=-1) # (B, T, T)
+        wei = self.dropout(wei)
+
+        v = self.value(x)  # (B,T,hs)
+        out = wei @ v  # (B, T, T) @ (B, T, hs) -> (B, T, hs)
+        return out
+
 
 
 
