@@ -3,6 +3,17 @@ import torch.nn as nn
 from torch.nn import functional as F
 from scripts import tocknizer
 
+class HEAD(nn.Module):
+    def __init__(self,headSize,n_embbed):
+        super().__init__()
+        self.key = nn.Linear(n_embbed,headSize,bias=False)
+        self.value = nn.Linear(n_embbed,headSize,bias=False)
+        self.query = nn.Linear(n_embbed,headSize,bias=False)
+
+
+
+
+
 
 class BiLangModel(nn.Module):
     def __init__(self,t,n_embbed,block_size=32):

@@ -30,7 +30,7 @@ from scripts import tocknizer
 # xbow3 = wei @ x
 
 
-class BiLangModelv2(nn.Module):
+class BiLangModel(nn.Module):
     def __init__(self,t):
         super().__init__()
         self.token_embd_table = nn.Embedding(t,t)
@@ -40,17 +40,18 @@ class BiLangModelv2(nn.Module):
         if targets is None:
             loss = None
         else:
-
             B, T, C = logits.shape
             logits = logits.view(B * T, C)
             targets = targets.view(B * T)
             loss = F.cross_entropy(logits, targets)
         return logits, loss
 
+
     def generate(self,idx, max_tocken_len = 100):
         for i in range(max_tocken_len):
             logits, loss = self.forward(idx)
-            logits = logits[:,-1]
+            logits = logits[:,-1] # Sizeing issue fix ...
+
             probs = F.softmax(logits, dim=-1)
             idx_next = torch.multinomial(probs, 1)
             idx = torch.cat((idx, idx_next), dim=1)
