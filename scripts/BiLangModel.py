@@ -1,7 +1,44 @@
 import torch
 import torch.nn as nn
 from torch.nn import functional as F
+
+from main import n_embbed
 from scripts import tocknizer
+
+
+
+
+
+class MultiHEAD(nn.Module):
+    def __init__(self,num_heads,head_size):
+        super().__init__()
+        self.heads= nn.ModuleList(HEAD(head_size) for _ in range(num_heads))
+        self.proj = nn.Linear(head_size * num_heads, n_embbed)
+        self.dropout = nn.Dropout(0.1)
+
+    def forward(self, x):
+        out = torch.cat([h(x) for h in self.heads], dim=-1)
+        out = self.dropout(self.proj(out))
+        return out
+
+
+class FeedForward(nn.Module):
+
+     def __init__(self,n_embbed):
+         super().__init__()
+         self.net = nn.Sequential(
+        nn.Linear(n_embbed,4*n_embbed),
+         nn.ReLU(),
+         nn.Linear(4*n_embbed,n_embbed),
+         nn.Dropout(0.1))
+
+    def forward(self,x):
+        return self.net(x)
+
+
+
+
+
 
 class HEAD(nn.Module):
     def __init__(self,headSize,n_embbed,block_size):
@@ -23,10 +60,6 @@ class HEAD(nn.Module):
         v = self.value(x)  # (B,T,hs)
         out = wei @ v  # (B, T, T) @ (B, T, hs) -> (B, T, hs)
         return out
-
-
-
-
 
 
 
