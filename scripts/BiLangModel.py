@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from torch.nn import functional as F
 
-from main import n_embbed
+# from main import n_embbed
 from scripts import tocknizer
 
 
@@ -24,15 +24,13 @@ class MultiHEAD(nn.Module):
 
 class FeedForward(nn.Module):
 
-     def __init__(self,n_embbed):
-         super().__init__()
-         self.net = nn.Sequential(
-        nn.Linear(n_embbed,4*n_embbed),
-         nn.ReLU(),
-         nn.Linear(4*n_embbed,n_embbed),
-         nn.Dropout(0.1))
+
+    def __init__(self,n_embbed):
+        super().__init__()
+        self.net = nn.Sequential(nn.Linear(n_embbed, 4 * n_embbed), nn.ReLU(), nn.Linear(4 * n_embbed, n_embbed),nn.Dropout(0.1))
 
     def forward(self,x):
+
         return self.net(x)
 
 
