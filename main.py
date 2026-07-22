@@ -52,6 +52,9 @@
 
 
 # --- Working Code ---
+import sys
+sys.stdout.reconfigure(encoding='utf-8')
+
 from scripts import tocknizer
 from scripts import decoder
 from scripts import BiLangModel

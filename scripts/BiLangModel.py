@@ -10,9 +10,9 @@ from scripts import tocknizer
 
 
 class MultiHEAD(nn.Module):
-    def __init__(self,num_heads,head_size):
+    def __init__(self,num_heads,head_size,n_embbed,block_size):
         super().__init__()
-        self.heads= nn.ModuleList(HEAD(head_size) for _ in range(num_heads))
+        self.heads= nn.ModuleList(HEAD(head_size,n_embbed,block_size) for _ in range(num_heads))
         self.proj = nn.Linear(head_size * num_heads, n_embbed)
         self.dropout = nn.Dropout(0.1)
 
@@ -45,7 +45,7 @@ class HEAD(nn.Module):
         self.value = nn.Linear(n_embbed,headSize,bias=False)
         self.query = nn.Linear(n_embbed,headSize,bias=False)
         self.register_buffer('tril',torch.tril(torch.ones(block_size,block_size)))
-        # self.dropout = nn.Dropout(dropout)
+        self.dropout = nn.Dropout(0.1)
     def forward(self,x):
         B,T,C = x.shape
         k = self.key(x)
@@ -61,14 +61,36 @@ class HEAD(nn.Module):
 
 
 
+
+class Block(nn.Module):
+
+
+    def __init__(self, n_embd, n_head, block_size):
+
+        super().__init__()
+        head_size = n_embd // n_head
+        self.sa = MultiHEAD(n_head, head_size, n_embd, block_size)
+        self.ffwd = FeedForward(n_embd)
+        self.ln1 = nn.LayerNorm(n_embd)
+        self.ln2 = nn.LayerNorm(n_embd)
+
+    def forward(self, x):
+        x = x + self.sa(self.ln1(x))
+        x = x + self.ffwd(self.ln2(x))
+        return x
+
+
+
 class BiLangModel(nn.Module):
-    def __init__(self,t,n_embbed,block_size=32):
+    def __init__(self,t,n_embbed,block_size=32,n_head=4):
         super().__init__()
         # print("Test Forwarrd 2 ", t )
         self.block_size = block_size
         self.token_embd_table = nn.Embedding(t,n_embbed)
         # print("Test Size ",self.token_embd_table.__sizeof__())
         self.postion_embd_table = nn.Embedding(block_size,n_embbed)
+        self.blocks = nn.Sequential(*[Block(n_embbed, n_head, block_size) for _ in range(6)])
+        self.ln_f = nn.LayerNorm(n_embbed)
         self.llm_head = nn.Linear(n_embbed,t)
 
     def forward(self, idx, targets=None):
@@ -76,6 +98,8 @@ class BiLangModel(nn.Module):
         # print("Test size" , T)
         token_embeddings = self.token_embd_table(idx)
         x = token_embeddings + self.postion_embd_table(torch.arange(T))
+        x = self.blocks(x)
+        x = self.ln_f(x)
         logits = self.llm_head(x)
 
 
